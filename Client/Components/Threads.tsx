@@ -124,34 +124,31 @@ const Threads = () => {
   );
 
   const handleLike = async (postId: any) => {
-    const updatedPosts = posts.map(async post => {
-      if (post.id === postId) {
-        // return {...post, liked: !post.liked};
-        const likedIndex = post.likes.findIndex(
-          (user: string) => user === 'user1',
-        );
-        if (likedIndex == -1) {
-          post.likes.push('user1');
-        } else {
-          post.likes.splice(likedIndex, 1);
+    try {
+      const updatedPosts = posts.map(post => {
+        if (post.id === postId) {
+          const liked = !post.liked;
+          return {...post, liked};
         }
-        return {...post};
-      }
-      return post;
-    });
-    setPosts(updatedPosts);
-    const response = await fetch(
-      `${BASE_URL}/api/thread/threads/${postId}/like`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+        return post;
+      });
+      setPosts(updatedPosts);
+      const response = await fetch(
+        `${BASE_URL}/api/thread/threads/${postId}/like`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({userId: 'user1'}),
         },
-        body: JSON.stringify({userId: 'user1'}),
-      },
-    );
-    if (response.status === 200) {
-      fetchPosts();
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
     }
   };
 
