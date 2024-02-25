@@ -133,6 +133,9 @@ const Threads = () => {
         return post;
       });
       setPosts(updatedPosts);
+
+      console.log('post id is ', postId);
+
       const response = await fetch(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
         {
@@ -146,6 +149,8 @@ const Threads = () => {
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      } else {
+        fetchPosts();
       }
     } catch (error) {
       console.error('Error liking post:', error);

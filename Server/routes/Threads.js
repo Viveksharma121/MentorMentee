@@ -37,16 +37,15 @@ router.put("/threads/:postId/like", async (req, res) => {
     const postId = req.params.postId;
     const userId = req.body.userId;
     const post = await Tweet.findOne({ id: postId });
-    console.log("====================================");
-    console.log(post);
-    console.log("====================================");
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
     const isLiked = post.userIdLists.some((item) => item.userId === userId);
-
-    if (!isLiked) {
+    console.log("====================================");
+    console.log(isLiked);
+    console.log("====================================");
+    if (isLiked === false) {
       post.userIdLists.push({ userId });
       post.likes++;
     } else {
