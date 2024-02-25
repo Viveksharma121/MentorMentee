@@ -1,5 +1,7 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Hello from '../Components/Hello';
+import ProjectForm from '../Components/ProjectForm';
+import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 
 //Tabs
@@ -21,6 +23,8 @@ function TabGroup() {
       })}>
       <Tab.Screen name="threads" component={Threads} />
       <Tab.Screen name="hello" component={Hello} />
+      <Tab.Screen name="SkillsForm" component={SkillsForm} />
+      <Tab.Screen name="ProjectForm" component={ProjectForm} />
     </Tab.Navigator>
   );
 }

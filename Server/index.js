@@ -8,7 +8,7 @@ app.use(cors());
 
 const threads_route = require("./routes/Threads");
 app.use("/api/thread", threads_route);
-
+app.use("/api", require("./routes/student"));
 db()
   .then(() => {
     app.listen(PORT, () => {
