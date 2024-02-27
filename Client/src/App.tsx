@@ -8,7 +8,6 @@
 import type {PropsWithChildren} from 'react';
 import React from 'react';
 import {StyleSheet, Text, useColorScheme, View} from 'react-native';
-
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Navigator from '../Navigators/Navigator';
 
@@ -49,7 +48,16 @@ function App(): React.JSX.Element {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
-  return <Navigator />;
+  // useEffect(() => {
+  //   SplashScreen.hide();
+  // }, []);
+
+  return (
+    <>
+      <Navigator />
+      {/* <Login /> */}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
