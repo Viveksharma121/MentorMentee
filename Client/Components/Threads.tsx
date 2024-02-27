@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Threads = () => {
   const BASE_URL = Config.BASE_URL;
+  console.log(BASE_URL);
   const [posts, setPosts] = useState<any[]>([]);
   async function fetchPosts() {
     try {

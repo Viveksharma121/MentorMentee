@@ -4,11 +4,14 @@ const db = async () => {
   try {
     mongoose.set("strictQuery", false);
     await mongoose
-      .connect("mongodb://localhost:27017/Mentor", {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        bufferCommands: false,
-      })
+      .connect(
+        "mongodb+srv://student:student123@cluster0.vpqpeal.mongodb.net/studentDB",
+        {
+          useNewUrlParser: true,
+          useUnifiedTopology: true,
+          bufferCommands: false,
+        }
+      )
       .then(() => {
         console.log("Db connected");
       })
