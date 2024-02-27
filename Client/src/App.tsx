@@ -6,11 +6,12 @@
  */
 
 import type {PropsWithChildren} from 'react';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {StyleSheet, Text, useColorScheme, View} from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Navigator from '../Navigators/Navigator';
+import SplashScreen from 'react-native-splash-screen';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -43,8 +44,11 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
+  
   const isDarkMode = useColorScheme() === 'dark';
-
+      useEffect(() => {
+    SplashScreen.hide();
+  }, []);
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
