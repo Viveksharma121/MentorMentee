@@ -1,36 +1,165 @@
+// import * as React from 'react';
+// import { BottomNavigation, Text } from 'react-native-paper';
+// import { Image } from 'react-native';
+// import SkillsForm from '../Components/SkillsForm';
+// import Threads from '../Components/Threads';
+// import Ask from '../Components/Ask';
+// import Profile from '../Components/Profile';
+
+// const profilePic = require('../assets/profile.jpg');
+// const askIcon = require("../assets/ask.jpg");
+
+// const BottomNavigationBar = () => {
+//   const [index, setIndex] = React.useState(0);
+//   const [routes] = React.useState([
+//     { key: 'threads', title: 'Threads', icon: 'home' },
+//     { key: 'Ask', title: 'Ask', icon: askIcon },
+//     { key: 'SkillsForm', title: 'Skills Form', icon: 'format-list-bulleted' },
+//     { key: 'Profile', title: 'Profile', icon: profilePic },
+//   ]);
+
+//   const renderScene = BottomNavigation.SceneMap({
+//     threads: Threads,
+//     Ask: Ask,
+//     SkillsForm: SkillsForm,
+//     Profile: Profile,
+//   });
+
+//   // const renderIcon = ({ route, focused, color, size } : { route: any; focused: boolean; color: string; size: number }) => {
+//   //   return (
+//   //     <Image
+//   //       source={route.icon}
+//   //       style={{ width: size, height: size, backgroundColor: 'transparent' }} // Adjust size and color as needed
+//   //     />
+//   //   );
+//   // };
+
+//   const renderIcon = ({ route, focused, color }: { route: any; focused: boolean; color: string }) => {
+//   const { key, icon } = route;
+//   let iconSource = null;
+
+//   // Determine the icon source based on the route key
+//   switch (key) {
+//     case 'threads':
+//       iconSource = require('../assets/logo.png');
+//       break;
+//     case 'Ask':
+//       iconSource = require("../assets/ask.jpg");
+//       break;
+//     case 'SkillsForm':
+//       // Adjust this path as needed
+//       iconSource = require("../assets/skills.jpg");
+//       break;
+//     case 'Profile':
+//       // Adjust this path as needed
+//       iconSource = require("../assets/profile.jpg");
+//       break;
+//     default:
+//       iconSource = null;
+//   }
+
+//   // Render the icon image
+//   return iconSource ? <Image source={iconSource} style={{ width: 24, height: 24, tintColor: color }} /> : null;
+// };
+
+
+//   return (
+//     <BottomNavigation
+//       navigationState={{ index, routes }}
+//       onIndexChange={setIndex}
+//       renderScene={renderScene}
+//       renderIcon={renderIcon}
+//       barStyle={{ backgroundColor: 'transparent' }}
+//     />
+//   );
+// };
+
+// export default BottomNavigationBar;
+
+
+
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Hello from '../Components/Hello';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { useState } from 'react';
+import { Image, ImageStyle } from 'react-native';
+import Login from '../Components/Login';
 import ProjectForm from '../Components/ProjectForm';
+import Register from '../Components/Register';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
-
-//Tabs
+import Profile from '../Components/Profile';
+const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function TabGroup() {
+const AuthNavigator = () => {
+  return (
+    <Stack.Navigator initialRouteName="Login">
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AppAll"
+        component={AppNavigator}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const AppNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({route, navigation}) => ({
-        tabBarIcon: ({color, focused, size}) => {
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'threads') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'profile') {
-            // Handle other cases if needed
+           let iconStyle: ImageStyle = { width: 24, height: 24 }
+          if (route.name === 'Threads') {
+            iconName = focused
+              ? require('../assets/logo.png') // Image for active state
+              : require('../assets/logo.png'); // Image for inactive state
+          } else if (route.name === 'Profile') {
+            iconName = focused
+              ? require('../assets/profile.png') // Image for active state
+              : require('../assets/profile.png'); // Image for inactive state
+          } else if (route.name === 'SkillsForm') {
+            iconName = focused
+              ? require('../assets/skills.png') // Image for active state
+              : require('../assets/skills.png'); // Image for inactive state
+          } else if (route.name === 'ProjectForm') {
+            iconName = focused
+              ? require('../assets/profile.png') // Image for active state
+              : require('../assets/profile.png'); // Image for inactive state
           }
-          // Return your icon component here based on the conditions
+
+          // Add outline style if focused
+          if (focused) {
+            iconStyle = { ...iconStyle, borderWidth: 2, borderColor: 'blue' };
+          }
+          // You can return any component here
+          return <Image source={iconName} style={{ width: 24, height: 24 }} />;
         },
-      })}>
-      <Tab.Screen name="threads" component={Threads} />
-      <Tab.Screen name="hello" component={Hello} />
+      })}
+    >
+      <Tab.Screen name="Threads" component={Threads} />
+      <Tab.Screen name="Profile" component={Profile} />
       <Tab.Screen name="SkillsForm" component={SkillsForm} />
       <Tab.Screen name="ProjectForm" component={ProjectForm} />
     </Tab.Navigator>
   );
-}
+};
 
-function Navigator() {
-  return <TabGroup />;
-}
+const Navigator = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+};
 
 export default Navigator;

@@ -160,6 +160,7 @@ const Threads = () => {
 
   return (
     <View style={styles.container}>
+      
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
@@ -175,7 +176,7 @@ const Threads = () => {
           visible={isModalVisible}
           onDismiss={toggleModal}
           contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Add Newestbhsbchas Post</Text>
+          <Text style={styles.modalTitle}>Add New Post</Text>
           <TextInput
             style={styles.modalInputTitle}
             placeholder="Title"
@@ -212,13 +213,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#F8EDE3',
+    backgroundColor: '#ffffff',
   },
   postContainer: {
     marginBottom: 16,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: '#fffff',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 6,
     elevation: 4,
   },
   postHeader: {
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
   postTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#305F72',
+    color: '#000000',
   },
   postAuthor: {
     fontSize: 16,
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 16,
     right: 16,
-    backgroundColor: '#F18C8E',
+    backgroundColor: '#002D62',
     borderRadius: 50,
     width: 50,
     height: 50,
