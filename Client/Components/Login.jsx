@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import React, { useState } from 'react';
 import {
+  Alert,
   StyleSheet,
-  View,
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
+  View,
 } from 'react-native';
 import Config from 'react-native-config';
-import axios from 'axios';
-
 export default function Login() {
   const BASE_URL = Config.BASE_URL;
   const [username, setUsername] = useState('');
@@ -19,17 +19,22 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
+      console.log('handle loggin called');
       if (username === '' || password === '') {
         Alert.alert('Alert', 'Please enter both username and password.', [
-          { text: 'OK', onPress: () => console.log('OK Pressed') },
+          {text: 'OK', onPress: () => console.log('OK Pressed')},
         ]);
       } else {
         const response = await axios.post(`${BASE_URL}/user/login`, {
           username,
           password,
         });
+        // Store token in AsyncStorage
+        console.log(response.data.token);
+        await AsyncStorage.setItem('token', response.data.token);
+        
         navigation.navigate('AppAll');
-        console.log(response.data._id);
+        // console.log(response.data._id);
         // if (response.status === 200) {
         //   // Successfully logged in, navigate to 'AppAll' or handle accordingly
         //   navigation.navigate('AppAll');
@@ -42,7 +47,7 @@ export default function Login() {
         // }
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.log('Login error:', error);
       // Handle other errors as needed
     }
   };
@@ -55,7 +60,7 @@ export default function Login() {
           style={styles.inputText}
           placeholder="Username"
           placeholderTextColor="#AFAFAF"
-          onChangeText={(username) => setUsername(username)}
+          onChangeText={username => setUsername(username)}
         />
       </View>
       <View style={styles.inputView}>
@@ -64,7 +69,7 @@ export default function Login() {
           style={styles.inputText}
           placeholder="Password"
           placeholderTextColor="#AFAFAF"
-          onChangeText={(password) => setPassword(password)}
+          onChangeText={password => setPassword(password)}
           secureTextEntry
         />
       </View>
@@ -72,7 +77,7 @@ export default function Login() {
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={{ marginHorizontal: 15 }}>
+        <TouchableOpacity style={{marginHorizontal: 15}}>
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
