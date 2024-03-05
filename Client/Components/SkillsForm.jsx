@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 import {
   Button,
@@ -18,7 +18,7 @@ const SkillsForm = () => {
   const [description, setDescription] = useState('');
   const [skills, setSkills] = useState([]);
   const [currentSkill, setCurrentSkill] = useState('');
-  const [projects, setProjects] = useState([{title: '', githubLink: ''}]);
+  const [projects, setProjects] = useState([{ title: '', githubLink: '' }]);
 
   const addSkill = () => {
     if (currentSkill.trim() !== '') {
@@ -34,7 +34,7 @@ const SkillsForm = () => {
   };
 
   const addProject = () => {
-    setProjects([...projects, {title: '', githubLink: ''}]);
+    setProjects([...projects, { title: '', githubLink: '' }]);
   };
 
   const updateProject = (index, field, value) => {
@@ -53,7 +53,7 @@ const SkillsForm = () => {
 
   const handleSubmit = async () => {
     // Simulate form submission process
-    console.log('Form data:', {name, position, description, skills, projects});
+    console.log('Form data:', { name, position, description, skills, projects });
     try {
       const response = await axios.post(`${BASE_URL}/api/skills`, {
         name,
@@ -71,7 +71,7 @@ const SkillsForm = () => {
       setDescription('');
       setSkills([]);
       setCurrentSkill('');
-      setProjects([{title: '', githubLink: ''}]);
+      setProjects([{ title: '', githubLink: '' }]);
     } catch (error) {
       console.error('Error submitting data:', error);
     }
@@ -80,7 +80,7 @@ const SkillsForm = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{paddingBottom: 20}}
+      contentContainerStyle={{ paddingBottom: 20 }}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag">
       {/* Form Fields */}

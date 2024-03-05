@@ -21,7 +21,7 @@ const Threads = () => {
       console.log('fetch post called');
       const response = await axios.get(`${BASE_URL}/api/thread`);
       console.log('after response');
-
+      console.log(response);
       if (!response.data) {
         throw new Error('Error fetching public posts');
       }
