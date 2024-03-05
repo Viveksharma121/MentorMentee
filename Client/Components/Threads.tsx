@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import base64 from 'base-64';
 import React, {useEffect, useState} from 'react';
+
 import {
   FlatList,
   ListRenderItemInfo,
@@ -12,10 +14,10 @@ import {
 import Config from 'react-native-config';
 import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
 const Threads = () => {
   const BASE_URL = Config.BASE_URL;
   const [posts, setPosts] = useState<any[]>([]);
+  const [username, setUsername] = useState<string>('');
   async function fetchPosts() {
     try {
       console.log('fetch post called');
@@ -41,13 +43,41 @@ const Threads = () => {
       console.log(JSON.stringify(error));
     }
   }
+  // async storage se token le lo
+  const getToken = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      return token;
+    } catch (error) {
+      console.error('Error fetching token:', error);
+    }
+  };
 
-  // const fetchPosts = async () => {
-  //   console.log('fetch post called without code');
+  const userName = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Token not found');
+      }
+      // Split the token into parts (header, payload, signature)
+      const [, payload] = token.split('.');
 
-  // };
+      // sirf payload decode kiya kyuki usme hi data hota hau ie apna username
+      const decodedPayload = base64.decode(payload);
+
+      const payloadObject = JSON.parse(decodedPayload);
+
+      const username = payloadObject.username;
+      console.log('Username:', username);
+
+      setUsername(username.toString());
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  };
 
   useEffect(() => {
+    userName();
     fetchPosts();
   }, []);
 
@@ -56,6 +86,7 @@ const Threads = () => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+    setNewPost({user_name: username, content: ''});
   };
 
   const handleInputChange = (field: any, value: any) => {
@@ -78,37 +109,27 @@ const Threads = () => {
 
   const handleAddPost = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
+      console.log(newPost);
+      const newPostWithUsername = {...newPost, user_name: username};
+      console.log(newPostWithUsername);
 
-      // Make request to protected endpoint with token in headers
-      const userdata = await axios.get(`${BASE_URL}/user/currentUser`, {
+      const response = await fetch(`${BASE_URL}/api/thread/threads`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(newPostWithUsername),
       });
 
-      console.log(userdata);
-      if (!userdata) {
-        throw new Error('Error fetching current user information');
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-      // console.log(newPost);
-      // const response = await fetch(`${BASE_URL}/api/thread/threads`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(newPost),
-      // });
 
-      // if (!response.ok) {
-      //   throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      // }
-
-      // const data = await response.json();
-      // console.log(data);
-      // console.log(newPost);
-      // setPosts([...posts, data]);
-      // console.log('after adding');
+      const data = await response.json();
+      console.log(data);
+      console.log(newPost);
+      setPosts([...posts, data]);
+      console.log('after adding');
       fetchPosts();
       toggleModal();
     } catch (error) {
@@ -157,7 +178,7 @@ const Threads = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({userId: 'user1'}),
+          body: JSON.stringify({userId: username}),
         },
       );
 
@@ -190,11 +211,12 @@ const Threads = () => {
           contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New Post</Text>
           <TextInput
-            style={styles.modalInputTitle}
-            placeholder="Title"
-            value={newPost.user_name}
-            onChangeText={text => handleInputChange('user_name', text)}
+            style={[styles.modalInputTitle, styles.usernameStyle]}
+            placeholder="Username"
+            value={username}
+            editable={false}
           />
+
           <TextInput
             style={styles.modalInputContent}
             placeholder="Content"
@@ -226,6 +248,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#ffffff',
+  },
+  usernameStyle: {
+    // Additional styles to make it look like a username
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    color: 'gray', // You can adjust the color to match your design
   },
   postContainer: {
     marginBottom: 16,
