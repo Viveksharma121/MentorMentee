@@ -53,7 +53,7 @@ const threads_route = require("./routes/Threads");
 app.use("/api/thread", threads_route);
 app.use("/api", require("./routes/student"));
 
-app.use("/profile",require("./routes/profile"))
+// app.use("/profile",require("./routes/profile"))
 db()
   .then(() => {
     app.listen(PORT, () => {
