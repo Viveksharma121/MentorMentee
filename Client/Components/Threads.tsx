@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import React, {useEffect, useState} from 'react';
 import {
@@ -14,14 +15,13 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Threads = () => {
   const BASE_URL = Config.BASE_URL;
-  console.log(BASE_URL);
   const [posts, setPosts] = useState<any[]>([]);
   async function fetchPosts() {
     try {
       console.log('fetch post called');
       const response = await axios.get(`${BASE_URL}/api/thread`);
       console.log('after response');
-
+      console.log(response);
       if (!response.data) {
         throw new Error('Error fetching public posts');
       }
@@ -78,24 +78,37 @@ const Threads = () => {
 
   const handleAddPost = async () => {
     try {
-      console.log(newPost);
-      const response = await fetch(`${BASE_URL}/api/thread/threads`, {
-        method: 'POST',
+      const token = await AsyncStorage.getItem('token');
+
+      // Make request to protected endpoint with token in headers
+      const userdata = await axios.get(`${BASE_URL}/user/currentUser`, {
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newPost),
       });
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      console.log(userdata);
+      if (!userdata) {
+        throw new Error('Error fetching current user information');
       }
+      // console.log(newPost);
+      // const response = await fetch(`${BASE_URL}/api/thread/threads`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(newPost),
+      // });
 
-      const data = await response.json();
-      console.log(data);
-      console.log(newPost);
-      setPosts([...posts, data]);
-      console.log('after adding');
+      // if (!response.ok) {
+      //   throw new Error(`Error: ${response.status} - ${response.statusText}`);
+      // }
+
+      // const data = await response.json();
+      // console.log(data);
+      // console.log(newPost);
+      // setPosts([...posts, data]);
+      // console.log('after adding');
       fetchPosts();
       toggleModal();
     } catch (error) {
@@ -160,7 +173,6 @@ const Threads = () => {
 
   return (
     <View style={styles.container}>
-      
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
