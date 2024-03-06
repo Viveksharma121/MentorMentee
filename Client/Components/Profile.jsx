@@ -1,16 +1,17 @@
-// ProfilePage.js
-
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Avatar, Title, Subheading } from 'react-native-paper';
+import React, { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Avatar, Card, Subheading, Title } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import base64 from 'base-64';
 import Config from 'react-native-config';
+import { useFocusEffect } from '@react-navigation/native';
 
-const ProfilePage = () => {
+const ProfilePage = ({ navigation }) => {
   const BASE_URL = Config.BASE_URL;
   const [userDetails, setUserDetails] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const getToken = async () => {
     try {
@@ -26,86 +27,152 @@ const ProfilePage = () => {
       if (!token) {
         throw new Error('Token not found');
       }
-
-      // Split the token into parts (header, payload, signature)
       const [, payload] = token.split('.');
-
-      // Decode only the payload because it contains the username
       const decodedPayload = base64.decode(payload);
-
       const payloadObject = JSON.parse(decodedPayload);
-
-      const username = payloadObject.username;
-      console.log('Username:', username);
-
-      return username.toString();
+      return payloadObject.username;
     } catch (error) {
       console.error('Error decoding token:', error);
     }
   };
 
-  useEffect(() => {
-    // Fetch user details using the username
-    const fetchUserDetails = async () => {
-      try {
-        const token = await getToken();
-        if (!token) {
-          throw new Error('Token not found');
-        }
-
-        const username = await getUsernameFromToken(token);
-
-        // Fetch user details
-        const response = await axios.get(`${BASE_URL}/user/${username}`);
-        console.log(response.data);
-        setUserDetails(response.data);
-      } catch (error) {
-        console.error('Error fetching user details:', error);
+  const fetchUserDetails = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        console.error('Token not found');
+        return;
       }
-    };
+      const username = await getUsernameFromToken(token);
+      if (!username) {
+        console.error('Username not found in token');
+        return;
+      }
 
-    fetchUserDetails();
-  }, []);
+      const response = await axios.get(`${BASE_URL}/user/${username}`);
+      setUserDetails(response.data);
+
+      try {
+        const skillsResponse = await axios.get(`${BASE_URL}/api/${username}/skills`);
+        setSkills(skillsResponse.data.skills || []);
+        setProjects(skillsResponse.data.projects || []);
+      } catch (error) {
+        // console.error('Error fetching skills or projects:', error);
+        setSkills([]);
+        setProjects([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      setUserDetails(null);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserDetails();
+    }, [])
+  );
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       {userDetails ? (
         <>
           <Avatar.Text
-            size={80}
+            size={100}
             label={userDetails.username[0].toUpperCase()}
             style={styles.avatar}
           />
           <Title style={styles.username}>{userDetails.username}</Title>
           <Subheading style={styles.email}>Email: {userDetails.email}</Subheading>
-          {/* Add more user details as needed */}
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Skills</Text>
+            {skills.map((skill, index) => (
+              <Card key={index} style={styles.card}>
+                <Card.Content>
+                  <Text style={styles.cardText}>{skill}</Text>
+                </Card.Content>
+              </Card>
+            ))}
+          </View>
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Projects</Text>
+            {projects.map((project, index) => (
+              <Card key={index} style={styles.card}>
+                <Card.Content>
+                  <Text style={styles.cardText}>{project.title}</Text>
+                  <Text style={styles.linkText}>{project.githubLink}</Text>
+                </Card.Content>
+              </Card>
+            ))}
+          </View>
         </>
       ) : (
         <Text>Loading user details...</Text>
       )}
-    </View>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('SkillsForm')}>
+        <Text style={styles.addButtonText}>Add Skills / Projects</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff', // Background color
+    paddingVertical: 20,
+    backgroundColor: '#f5f5f5',
   },
   avatar: {
-    backgroundColor: '#3498db', // Avatar background color
+    backgroundColor: '#3498db',
+    marginBottom: 10,
   },
   username: {
-    marginTop: 10,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   email: {
-    marginTop: 5,
     fontSize: 16,
     color: '#555',
+    marginBottom: 20,
+  },
+  sectionContainer: {
+    width: '90%',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  card: {
+    marginBottom: 10,
+    elevation: 3,
+  },
+  cardText: {
+    fontSize: 16,
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#007bff',
+    marginTop: 5,
+  },
+  addButton: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  addButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
   },
 });
 
