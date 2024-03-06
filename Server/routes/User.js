@@ -11,6 +11,6 @@ router.post("/register", user.register);
 router.post("/login", user.login);
 
 router.get('/:username',user.getuser)
-router.get("/:username/skills",studentController.getUserSkills);
+
 
 module.exports = router;
