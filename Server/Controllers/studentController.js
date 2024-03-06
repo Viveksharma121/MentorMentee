@@ -68,3 +68,21 @@ exports.getUserSkills=async(req,res)=>{
   }
 };
 
+exports.searchUser=async(req,res)=>{
+  const { query } = req.query;
+
+  try {
+    // Search for students with matching username or skills
+    const results = await StudentModel.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } }, // Case-insensitive username search
+        { skills: { $in: [query] } }, // Search in skills array
+      ],
+    });
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error searching students:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
