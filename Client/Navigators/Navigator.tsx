@@ -86,6 +86,7 @@ import Register from '../Components/Register';
 import RoadmapComponent from '../Components/RoadMap';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
+import UserProfile from '../Components/UserProfile';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -110,6 +111,11 @@ const AuthNavigator = () => {
       <Stack.Screen
         name="RoadMap"
         component={RoadmapComponent}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

@@ -86,3 +86,20 @@ exports.searchUser=async(req,res)=>{
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }
+
+exports.getSearchUser=async(req,res)=>{
+  const { username } = req.query;
+  console.log("backend username",username);
+  try {
+    const user = await StudentModel.findOne({name:username});
+
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
