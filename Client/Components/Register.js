@@ -1,14 +1,14 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import {useNavigation} from '@react-navigation/native';
+import axios from 'axios'; // Import the axios library
+import React, {useState} from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
-import axios from 'axios'; // Import the axios library
 import Config from 'react-native-config';
 export default function Register() {
   const BASE_URL = Config.BASE_URL;
@@ -19,18 +19,23 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
+      console.log('handle register called');
       const response = await axios.post(`${BASE_URL}/user/register`, {
         username,
         email,
         password,
       });
+      console.log(response.data);
 
       if (response.status === 200) {
         // Registration successful, navigate to 'AppAll' with the username.
-        navigation.navigate('AppAll', { username });
+        navigation.navigate('Login');
       } else {
         // Handle registration error, show alert or update state
-        Alert.alert('Registration Failed', response.data.message || 'Something went wrong');
+        Alert.alert(
+          'Registration Failed',
+          response.data.message || 'Something went wrong',
+        );
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -46,7 +51,7 @@ export default function Register() {
           style={styles.inputText}
           placeholder="Username"
           placeholderTextColor="#AFAFAF"
-          onChangeText={(username) => setUsername(username)}
+          onChangeText={username => setUsername(username)}
         />
       </View>
       <View style={styles.inputView}>
@@ -55,7 +60,7 @@ export default function Register() {
           style={styles.inputText}
           placeholder="Email"
           placeholderTextColor="#AFAFAF"
-          onChangeText={(email) => setEmail(email)}
+          onChangeText={email => setEmail(email)}
         />
       </View>
       <View style={styles.inputView}>
@@ -64,14 +69,14 @@ export default function Register() {
           style={styles.inputText}
           placeholder="Password"
           placeholderTextColor="#AFAFAF"
-          onChangeText={(password) => setPassword(password)}
+          onChangeText={password => setPassword(password)}
         />
       </View>
       <TouchableOpacity style={styles.registerBtn} onPress={handleRegister}>
         <Text style={styles.registerText}>REGISTER</Text>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={{ marginHorizontal: 15 }}>
+        <TouchableOpacity style={{marginHorizontal: 15}}>
           <Text>Already have an account? Login</Text>
         </TouchableOpacity>
       </View>
@@ -120,4 +125,3 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
 });
-

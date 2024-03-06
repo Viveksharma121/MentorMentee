@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
 import React, {useEffect, useState} from 'react';
-
 import {
   FlatList,
   ListRenderItemInfo,
@@ -15,6 +15,7 @@ import Config from 'react-native-config';
 import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 const Threads = () => {
+  const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
   const [posts, setPosts] = useState<any[]>([]);
   const [username, setUsername] = useState<string>('');
@@ -23,7 +24,7 @@ const Threads = () => {
       console.log('fetch post called');
       const response = await axios.get(`${BASE_URL}/api/thread`);
       console.log('after response');
-
+      console.log(response);
       if (!response.data) {
         throw new Error('Error fetching public posts');
       }
@@ -194,6 +195,24 @@ const Threads = () => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Threads</Text>
+        <View style={styles.headerIcons}>
+          {/* Add your icons for notification, chat, and roadmaps here */}
+          <IconButton
+            icon="bell"
+            onPress={() => console.log('Notification icon pressed')}
+          />
+          <IconButton
+            icon="chat"
+            onPress={() => console.log('Chat icon pressed')}
+          />
+          <IconButton
+            icon="map"
+            onPress={() => Navigation.navigate('RoadMap')}
+          />
+        </View>
+      </View>
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
@@ -248,6 +267,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#ffffff',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   usernameStyle: {
     // Additional styles to make it look like a username

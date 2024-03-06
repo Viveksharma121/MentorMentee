@@ -10,4 +10,7 @@ router.post("/register", user.register);
 
 router.post("/login", user.login);
 
+router.get('/:username',user.getuser)
+
+
 module.exports = router;

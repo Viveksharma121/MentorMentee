@@ -42,12 +42,17 @@ passport.deserializeUser(User.deserializeUser());
 const user_routes=require("./routes/User");
 app.use("/user", user_routes);
 
-
-
+// app.use((req,res,next)=>{
+//   //req.user returns the object of the user 
+//   //telling us the user is there or not
+//    res.locals.currentUser=req.user;
+//    next();
+// })
 
 const threads_route = require("./routes/Threads");
 app.use("/api/thread", threads_route);
 app.use("/api", require("./routes/student"));
+
 db()
   .then(() => {
     app.listen(PORT, () => {
@@ -57,6 +62,8 @@ db()
   .catch((error) => {
     console.log("Failed to connect" + error);
   });
+
+
 app.get("/", (req, res) => {
   res.json("running");
 });

@@ -12,17 +12,24 @@ import {
 } from 'react-native';
 import Config from 'react-native-config';
 export default function Login() {
-  const BASE_URL = Config.BASE_URL;
+  const BASE_URL = Config.BASE_URL; // Ensure your .env file contains BASE_URL
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
 
   const handleLogin = async () => {
+    if (username === '' || password === '') {
+      Alert.alert('Alert', 'Please enter both username and password.', [
+        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      ]);
+      return;
+    }
+
     try {
       console.log('handle loggin called');
       if (username === '' || password === '') {
         Alert.alert('Alert', 'Please enter both username and password.', [
-          {text: 'OK', onPress: () => console.log('OK Pressed')},
+          { text: 'OK', onPress: () => console.log('OK Pressed') },
         ]);
       } else {
         const response = await axios.post(`${BASE_URL}/user/login`, {
@@ -32,7 +39,7 @@ export default function Login() {
         // Store token in AsyncStorage
         console.log(response.data.token);
         await AsyncStorage.setItem('token', response.data.token);
-        
+
         navigation.navigate('AppAll');
         // console.log(response.data._id);
         // if (response.status === 200) {
@@ -77,7 +84,7 @@ export default function Login() {
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={{marginHorizontal: 15}}>
+        <TouchableOpacity style={{ marginHorizontal: 15 }} onPress={() => {/* Implement Forgot Password navigation or logic here */ }}>
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -109,10 +116,6 @@ const styles = StyleSheet.create({
     color: '#777777',
     fontWeight: '800',
   },
-  singUp: {
-    color: '#39B54A',
-    fontWeight: '500',
-  },
   loginBtn: {
     width: '80%',
     backgroundColor: '#39B54A',
@@ -129,12 +132,15 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    width: '80%',
   },
   forgot: {
     color: '#777777',
     fontWeight: '500',
   },
-  // Add any other styles as needed
+  singUp: {
+    color: '#39B54A',
+    fontWeight: '500',
+  },
 });

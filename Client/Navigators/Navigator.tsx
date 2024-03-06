@@ -62,7 +62,6 @@
 //   return iconSource ? <Image source={iconSource} style={{ width: 24, height: 24, tintColor: color }} /> : null;
 // };
 
-
 //   return (
 //     <BottomNavigation
 //       navigationState={{ index, routes }}
@@ -76,19 +75,17 @@
 
 // export default BottomNavigationBar;
 
-
-
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import { useState } from 'react';
-import { Image, ImageStyle } from 'react-native';
+import {useState} from 'react';
+import {Image, ImageStyle} from 'react-native';
 import Login from '../Components/Login';
+import Profile from '../Components/Profile';
 import ProjectForm from '../Components/ProjectForm';
 import Register from '../Components/Register';
+import RoadmapComponent from '../Components/RoadMap';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
-import Profile from '../Components/Profile';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -108,7 +105,12 @@ const AuthNavigator = () => {
       <Stack.Screen
         name="AppAll"
         component={AppNavigator}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="RoadMap"
+        component={RoadmapComponent}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
@@ -117,10 +119,10 @@ const AuthNavigator = () => {
 const AppNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
-           let iconStyle: ImageStyle = { width: 24, height: 24 }
+          let iconStyle: ImageStyle = {width: 24, height: 24};
           if (route.name === 'Threads') {
             iconName = focused
               ? require('../assets/logo.png') // Image for active state
@@ -141,13 +143,12 @@ const AppNavigator = () => {
 
           // Add outline style if focused
           if (focused) {
-            iconStyle = { ...iconStyle, borderWidth: 2, borderColor: 'blue' };
+            iconStyle = {...iconStyle, borderWidth: 2, borderColor: 'blue'};
           }
           // You can return any component here
-          return <Image source={iconName} style={{ width: 24, height: 24 }} />;
+          return <Image source={iconName} style={{width: 24, height: 24}} />;
         },
-      })}
-    >
+      })}>
       <Tab.Screen name="Threads" component={Threads} />
       <Tab.Screen name="Profile" component={Profile} />
       <Tab.Screen name="SkillsForm" component={SkillsForm} />

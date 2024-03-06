@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require("uuid");
 router.get("/", async (req, res) => {
   try {
     const tweets = await Tweet.find();
+    
     res.status(200).json(tweets);
   } catch (error) {
     console.error("Error fetching tweets:", error);
