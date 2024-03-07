@@ -5,13 +5,24 @@ const { v4: uuidv4 } = require("uuid");
 router.get("/", async (req, res) => {
   try {
     const tweets = await Tweet.find();
-    
     res.status(200).json(tweets);
   } catch (error) {
     console.error("Error fetching tweets:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+router.get("/userthread", async (req, res) => {
+  try {
+    const { username } = req.query;
+    const tweets = await Tweet.find({ user_name: username });
+    res.status(200).json(tweets);
+  } catch (error) {
+    console.error("Error fetching tweets:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 router.post("/threads", async (req, res) => {
   try {
     const { user_name, content } = req.body;

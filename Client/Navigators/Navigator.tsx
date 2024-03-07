@@ -75,9 +75,10 @@
 
 // export default BottomNavigationBar;
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {Image, ImageStyle} from 'react-native';
 import Login from '../Components/Login';
 import Profile from '../Components/Profile';
@@ -86,7 +87,7 @@ import Register from '../Components/Register';
 import RoadmapComponent from '../Components/RoadMap';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
-import UserProfile from '../Components/UserProfile';
+import UserProfile from '../Components/UserProfile/UserProfile';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -103,9 +104,16 @@ const AuthNavigator = () => {
         component={Register}
         options={{headerShown: false}}
       />
+    </Stack.Navigator>
+  );
+};
+
+const AppNavigator = () => {
+  return (
+    <Stack.Navigator>
       <Stack.Screen
-        name="AppAll"
-        component={AppNavigator}
+        name="Main"
+        component={MainTabNavigator}
         options={{headerShown: false}}
       />
       <Stack.Screen
@@ -122,7 +130,7 @@ const AuthNavigator = () => {
   );
 };
 
-const AppNavigator = () => {
+const MainTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -165,6 +173,20 @@ const AppNavigator = () => {
 
 const Navigator = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        // Check if the user is logged in
+        const userToken = await AsyncStorage.getItem('token');
+        setIsLoggedIn(userToken !== null);
+      } catch (error) {
+        // Handle error
+        console.error('Error checking login status:', error);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
 
   return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
 };
