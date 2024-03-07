@@ -1,86 +1,65 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
-import {
-  FlatList,
-  ListRenderItemInfo,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import Config from 'react-native-config';
 import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
+
 const Threads = () => {
   const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
   const [posts, setPosts] = useState<any[]>([]);
   const [username, setUsername] = useState<string>('');
+  const [newComment, setNewComment] = useState<string>('');
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+  const [commentModalVisible, setCommentModalVisible] =
+    useState<boolean>(false);
+  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
+
+  // Function to fetch posts
   async function fetchPosts() {
     try {
-      console.log('fetch post called');
       const response = await axios.get(`${BASE_URL}/api/thread`);
-      console.log('after response');
-      console.log(response);
       if (!response.data) {
         throw new Error('Error fetching public posts');
       }
-
       const data: any = response.data;
-
-      // console.log('fetched');
       const sortedData = data.sort((a: any, b: any) => {
         const dateA = new Date(a?.created_at ?? '');
         const dateB = new Date(b?.created_at ?? '');
         return dateB.getTime() - dateA.getTime();
       });
-
       setPosts(sortedData);
-      // console.log(sortedData);
     } catch (error) {
       console.log(JSON.stringify(error));
     }
   }
-  // async storage se token le lo
-  const getToken = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      return token;
-    } catch (error) {
-      console.error('Error fetching token:', error);
-    }
-  };
 
+  // Function to get token and decode username
   const userName = async () => {
     try {
-      const token = await getToken();
+      const token = await AsyncStorage.getItem('token');
       if (!token) {
         throw new Error('Token not found');
       }
-      // Split the token into parts (header, payload, signature)
       const [, payload] = token.split('.');
-
-      // sirf payload decode kiya kyuki usme hi data hota hau ie apna username
       const decodedPayload = base64.decode(payload);
-
       const payloadObject = JSON.parse(decodedPayload);
-
-      const username = payloadObject.username;
-      console.log('Username:', username);
-
-      setUsername(username.toString());
+      setUsername(payloadObject.username.toString());
     } catch (error) {
       console.error('Error decoding token:', error);
     }
   };
 
-  useEffect(() => {
-    userName();
-    fetchPosts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      userName();
+      fetchPosts();
+    }, []),
+  );
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newPost, setNewPost] = useState({user_name: '', content: ''});
@@ -90,54 +69,69 @@ const Threads = () => {
     setNewPost({user_name: username, content: ''});
   };
 
-  const handleInputChange = (field: any, value: any) => {
+  const handleInputChange = (field: string, value: string) => {
     setNewPost({...newPost, [field]: value});
   };
-  //   useEffect(() => {
-  //     // Fetch posts from the backend when the component mounts
-  //     fetchPosts();
-  //   }, []);
-
-  //   const fetchPosts = async () => {
-  //     try {
-  //       const response = await fetch('http://your-backend-url/getPosts');
-  //       const data = await response.json();
-  //       setPosts(data);
-  //     } catch (error) {
-  //       console.error('Error fetching posts:', error);
-  //     }
-  //   };
 
   const handleAddPost = async () => {
     try {
-      console.log(newPost);
       const newPostWithUsername = {...newPost, user_name: username};
-      console.log(newPostWithUsername);
-
-      const response = await fetch(`${BASE_URL}/api/thread/threads`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newPostWithUsername),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log(data);
-      console.log(newPost);
-      setPosts([...posts, data]);
-      console.log('after adding');
+      const response = await axios.post(
+        `${BASE_URL}/api/thread/threads`,
+        newPostWithUsername,
+      );
+      setPosts([...posts, response.data]);
       fetchPosts();
       toggleModal();
     } catch (error) {
       console.error('Error adding post:', error);
     }
   };
-  const renderItem = ({item}: ListRenderItemInfo<any>) => (
+
+  const handleLike = async (postId: any) => {
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/api/thread/threads/${postId}/like`,
+        {userId: username},
+      );
+      if (response.status === 200) {
+        fetchPosts(); // Refresh posts to reflect the new like status
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const addComment = async (postId: number) => {
+    try {
+      await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
+        user_name: username,
+        content: newComment,
+        // Add additional fields as needed
+      });
+      setNewComment('');
+      setActivePostId(null); // Close the comment input box
+      setCommentModalVisible(false);
+      fetchPosts(); // Re-fetch posts to show the new comment
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const closeCommentBox = () => {
+    setActivePostId(null);
+    setCommentModalVisible(false);
+    setNewComment('');
+  };
+
+  const toggleComments = () => {
+    setCommentsVisible(!commentsVisible);
+    setActivePostId(null); // Close the comment input box
+    setCommentModalVisible(false);
+    setNewComment('');
+  };
+
+  const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
         <Text style={styles.postTitle}>{item.user_name}</Text>
@@ -149,54 +143,70 @@ const Threads = () => {
             <Icon
               name={item.liked ? 'heart' : 'heart-o'}
               size={24}
-              color={item.liked ? '#FF69B4' : '#000000'}
+              color={item.liked ? '#FF69B4' : '#000'}
             />
           )}
           onPress={() => handleLike(item.id)}
         />
         <Text>{item.likes}</Text>
+        <IconButton
+          icon={() => (
+            <Icon
+              name={commentsVisible ? 'comment' : 'comment-o'}
+              size={24}
+              color="#000"
+            />
+          )}
+          onPress={toggleComments}
+        />
       </View>
+      {commentsVisible && item.comments && item.comments.length > 0 && (
+        <View style={styles.commentsContainer}>
+          <Text style={styles.commentsTitle}>Comments:</Text>
+          {item.comments.map((comment: any, index: number) => (
+            <Text key={index} style={styles.commentText}>
+              {comment.user_name}: {comment.content}
+            </Text>
+          ))}
+        </View>
+      )}
+      {activePostId === item.id && (
+        <View style={styles.commentInputContainer}>
+          <TextInput
+            style={styles.commentInput}
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Write a comment..."
+          />
+          <Button
+            mode="contained"
+            onPress={() => addComment(item.id)}
+            style={styles.commentSubmitButton}>
+            Submit
+          </Button>
+          <IconButton
+            icon="close"
+            size={24}
+            color="#000"
+            onPress={closeCommentBox}
+          />
+        </View>
+      )}
+      {commentsVisible && (
+        <Button
+          mode="contained"
+          onPress={() => setActivePostId(item.id)}
+          style={styles.commentButton}>
+          Comment
+        </Button>
+      )}
     </View>
   );
-
-  const handleLike = async (postId: any) => {
-    try {
-      const updatedPosts = posts.map(post => {
-        if (post.id === postId) {
-          const liked = !post.liked;
-          return {...post, liked};
-        }
-        return post;
-      });
-      setPosts(updatedPosts);
-
-      console.log('post id is ', postId);
-
-      const response = await fetch(
-        `${BASE_URL}/api/thread/threads/${postId}/like`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({userId: username}),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      } else {
-        fetchPosts();
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Threads</Text>
+        {/* <Text style={styles.headerTitle}>Threads</Text> */}
         <View style={styles.headerIcons}>
           {/* Add your icons for notification, chat, and roadmaps here */}
           <IconButton
@@ -213,15 +223,15 @@ const Threads = () => {
           />
         </View>
       </View>
+      <FlatList
+        data={posts}
+        keyExtractor={item => item._id.toString()}
+        renderItem={renderItem}
+      />
+
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
-
-      <FlatList
-        data={posts}
-        keyExtractor={item => item._id}
-        renderItem={renderItem}
-      />
 
       <Portal>
         <Modal
@@ -230,17 +240,16 @@ const Threads = () => {
           contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New Post</Text>
           <TextInput
-            style={[styles.modalInputTitle, styles.usernameStyle]}
+            style={[styles.modalInput, styles.usernameStyle]}
             placeholder="Username"
             value={username}
             editable={false}
           />
-
           <TextInput
-            style={styles.modalInputContent}
+            style={[styles.modalInput, styles.modalInputContent]}
             placeholder="Content"
             multiline={true}
-            numberOfLines={8}
+            numberOfLines={4}
             value={newPost.content}
             onChangeText={text => handleInputChange('content', text)}
           />
@@ -257,6 +266,34 @@ const Threads = () => {
             Cancel
           </Button>
         </Modal>
+
+        {/* Comment Modal */}
+        <Modal
+          visible={commentModalVisible}
+          onDismiss={closeCommentBox}
+          contentContainerStyle={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Add Comment</Text>
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Write a comment..."
+            multiline={true}
+            numberOfLines={4}
+            value={newComment}
+            onChangeText={setNewComment}
+          />
+          <Button
+            mode="contained"
+            onPress={() => addComment(activePostId || 0)}
+            style={styles.commentSubmitButton}>
+            Submit
+          </Button>
+          <IconButton
+            icon="close"
+            size={24}
+            color="#000"
+            onPress={closeCommentBox}
+          />
+        </Modal>
       </Portal>
     </View>
   );
@@ -268,33 +305,17 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#ffffff',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   usernameStyle: {
-    // Additional styles to make it look like a username
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 5,
     padding: 10,
-    backgroundColor: '#f0f0f0',
-    color: 'gray', // You can adjust the color to match your design
+    backgroundColor: '#ffffff',
+    color: 'gray',
   },
   postContainer: {
     marginBottom: 16,
-    backgroundColor: '#fffff',
+    backgroundColor: 'grey',
     padding: 16,
     borderRadius: 6,
     elevation: 4,
@@ -309,17 +330,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000000',
   },
-  postAuthor: {
-    fontSize: 16,
-    color: '#F18C8E',
-  },
   postContent: {
     fontSize: 16,
     marginBottom: 8,
   },
-  postLikes: {
-    fontSize: 14,
-    color: '#F18C8E',
+  commentsContainer: {
+    marginTop: 10,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  commentText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   addButton: {
     position: 'absolute',
@@ -338,20 +363,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-
-  // modalContainer: {
-  //   flex: 1,
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  //   padding: 20,
-  // },
-  // modalTitle: {
-  //   fontSize: 24,
-  //   fontWeight: 'bold',
-  //   marginBottom: 16,
-  //   color: '#305F72',
-  // },
   modalInput: {
     height: 40,
     width: '80%',
@@ -388,6 +399,45 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginBottom: 16,
     color: 'black',
+  },
+  commentButton: {
+    marginTop: 10,
+    backgroundColor: '#305F72',
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#cccccc',
+    padding: 10,
+    marginBottom: 10,
+  },
+  commentSubmitButton: {
+    marginBottom: 8,
+    backgroundColor: '#305F72',
+  },
+  commentCancelButton: {
+    marginBottom: 16,
+    color: 'black',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

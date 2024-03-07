@@ -9,8 +9,8 @@ import {
   View,
 } from 'react-native';
 import Config from 'react-native-config';
-import ProjectSlider from './ProjectSlider'; // Assuming you have a ProjectSlider component
-import SkillSlider from './SkillSlider'; // Assuming you have a SkillSlider component
+import ProjectSlider from './ProjectSlider';
+import SkillSlider from './SkillSlider';
 
 const UserProfile = ({route}) => {
   const BASE_URL = Config.BASE_URL;
@@ -18,8 +18,9 @@ const UserProfile = ({route}) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('skills'); // 'skills' or 'projects'
+  const [activeTab, setActiveTab] = useState('skills');
   const [tweets, setTweets] = useState([]);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -35,37 +36,35 @@ const UserProfile = ({route}) => {
         setLoading(false);
       }
     };
+
     const getAllTweets = async () => {
       try {
         const response = await axios.get(
           `${BASE_URL}/api/thread/userthread?username=${username}`,
         );
         const tweetsData = response.data;
-        console.log(tweetsData);
         setTweets(tweetsData);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchUserData();
 
+    fetchUserData();
     getAllTweets();
   }, [BASE_URL, username]);
 
   const handleAskButtonPress = () => {
-    // Add logic for the ASK button press
     console.log('Ask button pressed');
   };
 
   const handleFollowButtonPress = () => {
-    // Add logic for the FOLLOW button press
     console.log('Follow button pressed');
   };
 
   const windowWidth = Dimensions.get('window').width;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       {loading ? (
         <Text>Loading...</Text>
       ) : error ? (
@@ -145,20 +144,16 @@ const UserProfile = ({route}) => {
           </View>
           <View style={styles.contentBox}>
             {activeTab === 'skills' ? (
-              <View style={styles.sliderContainer}>
-                <SkillSlider skills={userData.skills} />
-              </View>
+              <SkillSlider skills={userData.skills} />
             ) : (
-              <View style={styles.sliderContainer}>
-                <ProjectSlider projects={userData.projects} />
-              </View>
+              <ProjectSlider projects={userData.projects} />
             )}
           </View>
           <View style={styles.divider} />
-          {/**/}
+
           <View style={styles.tweetsContainer}>
             <Text style={styles.tweetsTitle}>All Tweets</Text>
-            <ScrollView>
+            <ScrollView style={{maxHeight: 300}}>
               {tweets.map((tweet, index) => (
                 <View key={tweet._id} style={styles.tweetContainer}>
                   <Text style={styles.tweetContent}>{tweet.content}</Text>
@@ -166,14 +161,13 @@ const UserProfile = ({route}) => {
                   <Text style={styles.tweetDetails}>
                     Created At: {new Date(tweet.created_at).toLocaleString()}
                   </Text>
-                  {/* Render other relevant tweet details */}
                 </View>
               ))}
             </ScrollView>
           </View>
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -286,10 +280,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
     padding: 16,
     borderRadius: 8,
-  },
-  sliderContainer: {
-    height: Dimensions.get('window').width / 2,
-    maxHeight: 400,
   },
   divider: {
     height: 1,

@@ -29,6 +29,7 @@ module.exports.login = (req, res, next) => {
   console.log("====================================");
   console.log("login endpoint");
   console.log("====================================");
+  console.log("Request body:", req.body);
   passport.authenticate("local", (err, user, info) => {
     if (err) {
       console.error(err);

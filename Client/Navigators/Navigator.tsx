@@ -79,7 +79,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useEffect, useState} from 'react';
-import {Image, ImageStyle} from 'react-native';
+import {ActivityIndicator, Image, ImageStyle} from 'react-native';
 import Login from '../Components/Login';
 import Profile from '../Components/Profile';
 import ProjectForm from '../Components/ProjectForm';
@@ -88,10 +88,11 @@ import RoadmapComponent from '../Components/RoadMap';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const AuthNavigator = () => {
+const AppNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen
@@ -104,13 +105,38 @@ const AuthNavigator = () => {
         component={Register}
         options={{headerShown: false}}
       />
+      <Stack.Screen
+        name="Main"
+        component={MainTabNavigator}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="RoadMap"
+        component={RoadmapComponent}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
 
-const AppNavigator = () => {
+const AppNavigator2 = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator initialRouteName="Main">
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{headerShown: false}}
+      />
       <Stack.Screen
         name="Main"
         component={MainTabNavigator}
@@ -172,23 +198,34 @@ const MainTabNavigator = () => {
 };
 
 const Navigator = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        // Check if the user is logged in
-        const userToken = await AsyncStorage.getItem('token');
-        setIsLoggedIn(userToken !== null);
+        const token = await AsyncStorage.getItem('token');
+        setIsLoggedIn(token !== null);
       } catch (error) {
-        // Handle error
         console.error('Error checking login status:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkLoginStatus();
   }, []);
 
-  return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}
+      />
+    );
+  }
+
+  return isLoggedIn ? <AppNavigator2 /> : <AppNavigator />;
 };
 
 export default Navigator;

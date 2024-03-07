@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
   StyleSheet,
@@ -20,7 +20,7 @@ export default function Login() {
   const handleLogin = async () => {
     if (username === '' || password === '') {
       Alert.alert('Alert', 'Please enter both username and password.', [
-        { text: 'OK', onPress: () => console.log('OK Pressed') },
+        {text: 'OK', onPress: () => console.log('OK Pressed')},
       ]);
       return;
     }
@@ -29,9 +29,12 @@ export default function Login() {
       console.log('handle loggin called');
       if (username === '' || password === '') {
         Alert.alert('Alert', 'Please enter both username and password.', [
-          { text: 'OK', onPress: () => console.log('OK Pressed') },
+          {text: 'OK', onPress: () => console.log('OK Pressed')},
         ]);
       } else {
+        console.log('BASE_URL:', BASE_URL);
+        console.log('username:', username);
+        console.log('password:', password);
         const response = await axios.post(`${BASE_URL}/user/login`, {
           username,
           password,
@@ -40,7 +43,7 @@ export default function Login() {
         console.log(response.data.token);
         await AsyncStorage.setItem('token', response.data.token);
 
-        navigation.navigate('AppAll');
+        navigation.navigate('Main');
         // console.log(response.data._id);
         // if (response.status === 200) {
         //   // Successfully logged in, navigate to 'AppAll' or handle accordingly
@@ -84,7 +87,11 @@ export default function Login() {
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={{ marginHorizontal: 15 }} onPress={() => {/* Implement Forgot Password navigation or logic here */ }}>
+        <TouchableOpacity
+          style={{marginHorizontal: 15}}
+          onPress={() => {
+            /* Implement Forgot Password navigation or logic here */
+          }}>
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
