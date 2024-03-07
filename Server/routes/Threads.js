@@ -66,4 +66,28 @@ router.put("/threads/:postId/like", async (req, res) => {
   }
 });
 
+router.post('/threads/:postId/comments', async (req, res) => {
+  const postId = req.params.postId;
+  console.log(postId);
+  const { user_name, content } = req.body;
+  console.log(user_name,content);
+  
+  try {
+    const tweet = await Tweet.findOne({ id: postId});
+    console.log(tweet);
+    if (!tweet) {
+      return res.status(404).json({ message: 'Tweet not found' });
+    }
+
+    const newComment = { user_name, content };
+    tweet.comments.push(newComment);
+
+    await tweet.save();
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 module.exports = router;
