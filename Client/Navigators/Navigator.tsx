@@ -82,9 +82,9 @@ import {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ImageStyle} from 'react-native';
 import Login from '../Components/Login';
 import Profile from '../Components/Profile';
-import ProjectForm from '../Components/ProjectForm';
 import Register from '../Components/Register';
 import RoadmapComponent from '../Components/RoadMap';
+import ProjectForm from '../Components/Search/Searchpage';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
@@ -175,7 +175,7 @@ const MainTabNavigator = () => {
             iconName = focused
               ? require('../assets/skills.png') // Image for active state
               : require('../assets/skills.png'); // Image for inactive state
-          } else if (route.name === 'ProjectForm') {
+          } else if (route.name === 'Search') {
             iconName = focused
               ? require('../assets/profile.png') // Image for active state
               : require('../assets/profile.png'); // Image for inactive state
@@ -192,7 +192,7 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Threads" component={Threads} />
       <Tab.Screen name="Profile" component={Profile} />
       <Tab.Screen name="SkillsForm" component={SkillsForm} />
-      <Tab.Screen name="ProjectForm" component={ProjectForm} />
+      <Tab.Screen name="Search" component={ProjectForm} />
     </Tab.Navigator>
   );
 };
