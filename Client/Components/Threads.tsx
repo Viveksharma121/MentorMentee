@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useCallback, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Config from 'react-native-config';
-import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
+import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Threads = () => {
@@ -15,8 +15,7 @@ const Threads = () => {
   const [username, setUsername] = useState<string>('');
   const [newComment, setNewComment] = useState<string>('');
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [commentModalVisible, setCommentModalVisible] =
-    useState<boolean>(false);
+  const [commentModalVisible, setCommentModalVisible] = useState<boolean>(false);
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
   const [visibleComments, setVisibleComments] = useState<{
     [postId: number]: boolean;
@@ -41,7 +40,7 @@ const Threads = () => {
   }
 
   const toggleComments = (postId: number) => {
-    setVisibleComments(prevState => ({
+    setVisibleComments((prevState) => ({
       ...prevState,
       [postId]: !prevState[postId], // Toggle visibility
     }));
@@ -67,27 +66,27 @@ const Threads = () => {
     useCallback(() => {
       userName();
       fetchPosts();
-    }, []),
+    }, [])
   );
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({user_name: '', content: ''});
+  const [newPost, setNewPost] = useState({ user_name: '', content: '' });
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setNewPost({user_name: username, content: ''});
+    setNewPost({ user_name: username, content: '' });
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setNewPost({...newPost, [field]: value});
+    setNewPost({ ...newPost, [field]: value });
   };
 
   const handleAddPost = async () => {
     try {
-      const newPostWithUsername = {...newPost, user_name: username};
+      const newPostWithUsername = { ...newPost, user_name: username };
       const response = await axios.post(
         `${BASE_URL}/api/thread/threads`,
-        newPostWithUsername,
+        newPostWithUsername
       );
       setPosts([...posts, response.data]);
       fetchPosts();
@@ -101,7 +100,7 @@ const Threads = () => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        {userId: username},
+        { userId: username }
       );
       if (response.status === 200) {
         fetchPosts(); // Refresh posts to reflect the new like status
@@ -111,12 +110,27 @@ const Threads = () => {
     }
   };
 
+  const saveTweet = async (postId: number) => {
+    try {
+      await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
+        user_name: username,
+        content: posts.find((post) => post.id === postId)?.content,
+      });
+      fetchPosts();
+    } catch (error) {
+      console.error('Error saving tweet:', error);
+    }
+  };
+
   const addComment = async (postId: number) => {
     try {
-      await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
-        user_name: username,
-        content: newComment,
-      });
+      await axios.post(
+        `${BASE_URL}/api/thread/threads/${postId}/comments`,
+        {
+          user_name: username,
+          content: newComment,
+        }
+      );
       setNewComment('');
       setActivePostId(null);
       setCommentModalVisible(false);
@@ -132,20 +146,13 @@ const Threads = () => {
     setNewComment('');
   };
 
-  // const toggleComments = () => {
-  //   setCommentsVisible(!commentsVisible);
-  //   setActivePostId(null);
-  //   setCommentModalVisible(false);
-  //   setNewComment('');
-  // };
-
-  const renderItem = ({item}: {item: any}) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
         <Text style={styles.postTitle}>{item.user_name}</Text>
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <IconButton
           icon={() => (
             <Icon
@@ -167,14 +174,30 @@ const Threads = () => {
           )}
           onPress={() => toggleComments(item.id)}
         />
+        <IconButton
+          icon={() => (
+            <Icon
+              name="bookmark"
+              size={24}
+              color={
+                posts.find((post) => post.id === item.id)?.saved ? '#FFD700' : '#000'
+              }
+            />
+          )}
+          onPress={() => saveTweet(item.id)}
+        />
       </View>
-      {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
+      {visibleComments[item.id] &&
+        item.comments &&
+        item.comments.length > 0 ? (
         <View style={styles.commentsContainer}>
           <Text style={styles.commentsTitle}>Comments:</Text>
           <FlatList
             data={item.comments}
-            keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
-            renderItem={({item: comment}) => (
+            keyExtractor={(comment, index) =>
+              (comment?.id ?? index).toString()
+            }
+            renderItem={({ item: comment }) => (
               <View style={styles.commentContainer}>
                 <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
                 <Text style={styles.commentContent}>{comment.content}</Text>
@@ -242,7 +265,7 @@ const Threads = () => {
       </View>
       <FlatList
         data={posts}
-        keyExtractor={item => item._id.toString()}
+        keyExtractor={(item) => item._id.toString()}
         renderItem={renderItem}
       />
 
@@ -268,7 +291,7 @@ const Threads = () => {
             multiline={true}
             numberOfLines={4}
             value={newPost.content}
-            onChangeText={text => handleInputChange('content', text)}
+            onChangeText={(text) => handleInputChange('content', text)}
           />
           <Button
             mode="contained"
@@ -317,6 +340,7 @@ const Threads = () => {
 };
 
 const styles = StyleSheet.create({
+  // ... (existing styles)
   container: {
     flex: 1,
     padding: 16,
@@ -467,6 +491,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  //  commentButton: {
+  //   marginTop: 10,
+  //   backgroundColor: '#305F72',
+  // },
 });
 
 export default Threads;
