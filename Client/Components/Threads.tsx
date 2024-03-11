@@ -18,7 +18,9 @@ const Threads = () => {
   const [commentModalVisible, setCommentModalVisible] =
     useState<boolean>(false);
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
-
+  const [visibleComments, setVisibleComments] = useState<{
+    [postId: number]: boolean;
+  }>({});
   // Function to fetch posts
   async function fetchPosts() {
     try {
@@ -37,6 +39,13 @@ const Threads = () => {
       console.log(JSON.stringify(error));
     }
   }
+
+  const toggleComments = (postId: number) => {
+    setVisibleComments(prevState => ({
+      ...prevState,
+      [postId]: !prevState[postId], // Toggle visibility
+    }));
+  };
 
   // Function to get token and decode username
   const userName = async () => {
@@ -107,12 +116,11 @@ const Threads = () => {
       await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
         user_name: username,
         content: newComment,
-        // Add additional fields as needed
       });
       setNewComment('');
-      setActivePostId(null); // Close the comment input box
+      setActivePostId(null);
       setCommentModalVisible(false);
-      fetchPosts(); // Re-fetch posts to show the new comment
+      fetchPosts();
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -124,12 +132,12 @@ const Threads = () => {
     setNewComment('');
   };
 
-  const toggleComments = () => {
-    setCommentsVisible(!commentsVisible);
-    setActivePostId(null); // Close the comment input box
-    setCommentModalVisible(false);
-    setNewComment('');
-  };
+  // const toggleComments = () => {
+  //   setCommentsVisible(!commentsVisible);
+  //   setActivePostId(null);
+  //   setCommentModalVisible(false);
+  //   setNewComment('');
+  // };
 
   const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
@@ -157,19 +165,28 @@ const Threads = () => {
               color="#000"
             />
           )}
-          onPress={toggleComments}
+          onPress={() => toggleComments(item.id)}
         />
       </View>
-      {commentsVisible && item.comments && item.comments.length > 0 && (
+      {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
         <View style={styles.commentsContainer}>
           <Text style={styles.commentsTitle}>Comments:</Text>
-          {item.comments.map((comment: any, index: number) => (
-            <Text key={index} style={styles.commentText}>
-              {comment.user_name}: {comment.content}
-            </Text>
-          ))}
+          <FlatList
+            data={item.comments}
+            keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
+            renderItem={({item: comment}) => (
+              <View style={styles.commentContainer}>
+                <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
+                <Text style={styles.commentContent}>{comment.content}</Text>
+              </View>
+            )}
+          />
         </View>
+      ) : (
+        visibleComments[item.id] &&
+        item.comments.length < 1 && <Text>No comments yet</Text>
       )}
+
       {activePostId === item.id && (
         <View style={styles.commentInputContainer}>
           <TextInput
@@ -192,7 +209,7 @@ const Threads = () => {
           />
         </View>
       )}
-      {commentsVisible && (
+      {visibleComments[item.id] && (
         <Button
           mode="contained"
           onPress={() => setActivePostId(item.id)}
@@ -341,6 +358,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
+  },
+  commentContainer: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  commentAuthor: {
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  commentContent: {
+    flex: 1,
   },
   commentText: {
     fontSize: 16,
