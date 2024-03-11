@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Button } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import base64 from 'base-64';
-import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useFocusEffect } from '@react-navigation/native';
 
 const SaveTweets = () => {
     const [savedTweets, setSavedTweets] = useState([]);
@@ -24,7 +24,6 @@ const SaveTweets = () => {
             }
 
             const username = getUsernameFromToken(token);
-            console.log("checking ke liye username ", username)
             const response = await axios.get(`${Config.BASE_URL}/api/thread/${username}/saved-tweets`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -34,7 +33,27 @@ const SaveTweets = () => {
         }
     };
 
-    // Replace useEffect with useFocusEffect
+    const deleteSavedTweet = async (tweetId) => {
+        try {
+            const token = await AsyncStorage.getItem('token');
+            if (!token) {
+                console.error('Token not found');
+                return;
+            }
+            const username = getUsernameFromToken(token);
+            await axios.delete(`${Config.BASE_URL}/api/thread/${username}/${tweetId}/delete-saved-tweet`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            // Filter out the deleted tweet from the savedTweets state
+            const updatedTweets = savedTweets.filter(tweet => tweet.id !== tweetId);
+            setSavedTweets(updatedTweets);
+
+        } catch (error) {
+            console.error('Failed to delete tweet:', error);
+        }
+    };
+
     useFocusEffect(
         useCallback(() => {
             fetchSavedTweets();
@@ -50,6 +69,7 @@ const SaveTweets = () => {
                     <View style={styles.tweetContainer}>
                         <Text style={styles.username}>{item.user_name}</Text>
                         <Text style={styles.tweetContent}>{item.content}</Text>
+                        <Button title="Delete" onPress={() => deleteSavedTweet(item.id)} />
                     </View>
                 )}
             />

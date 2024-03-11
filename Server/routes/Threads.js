@@ -138,5 +138,27 @@ router.get('/:username/saved-tweets', async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+router.delete('/:user_name/:tweetId/delete-saved-tweet', async (req, res) => {
+  const { user_name, tweetId } = req.params;
+  console.log("delete ",user_name,tweetId);
+  try {
+    const tweet = await Tweet.findOneAndUpdate(
+      { id: tweetId },
+      { $pull: { savedBy: { userId: user_name } } },
+      { new: true }
+    );
+    console.log(tweet);
+
+    if (tweet) {
+      res.status(200).json({ message: 'Tweet removed from saved list successfully' });
+    } else {
+      res.status(404).json({ error: 'Tweet not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting saved tweet:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 module.exports = router;
