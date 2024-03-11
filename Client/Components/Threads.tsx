@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, { useEffect, useState, useCallback } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import Config from 'react-native-config';
-import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
+import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const Threads = () => {
@@ -15,7 +15,8 @@ const Threads = () => {
   const [username, setUsername] = useState<string>('');
   const [newComment, setNewComment] = useState<string>('');
   const [activePostId, setActivePostId] = useState<number | null>(null);
-  const [commentModalVisible, setCommentModalVisible] = useState<boolean>(false);
+  const [commentModalVisible, setCommentModalVisible] =
+    useState<boolean>(false);
   const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
 
   // Function to fetch posts
@@ -57,25 +58,28 @@ const Threads = () => {
     useCallback(() => {
       userName();
       fetchPosts();
-    }, [])
+    }, []),
   );
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({ user_name: '', content: '' });
+  const [newPost, setNewPost] = useState({user_name: '', content: ''});
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setNewPost({ user_name: username, content: '' });
+    setNewPost({user_name: username, content: ''});
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setNewPost({ ...newPost, [field]: value });
+    setNewPost({...newPost, [field]: value});
   };
 
   const handleAddPost = async () => {
     try {
-      const newPostWithUsername = { ...newPost, user_name: username };
-      const response = await axios.post(`${BASE_URL}/api/thread/threads`, newPostWithUsername);
+      const newPostWithUsername = {...newPost, user_name: username};
+      const response = await axios.post(
+        `${BASE_URL}/api/thread/threads`,
+        newPostWithUsername,
+      );
       setPosts([...posts, response.data]);
       fetchPosts();
       toggleModal();
@@ -86,7 +90,10 @@ const Threads = () => {
 
   const handleLike = async (postId: any) => {
     try {
-      const response = await axios.put(`${BASE_URL}/api/thread/threads/${postId}/like`, { userId: username });
+      const response = await axios.put(
+        `${BASE_URL}/api/thread/threads/${postId}/like`,
+        {userId: username},
+      );
       if (response.status === 200) {
         fetchPosts(); // Refresh posts to reflect the new like status
       }
@@ -124,14 +131,13 @@ const Threads = () => {
     setNewComment('');
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
-      
-      <Text style={styles.postTitle}>{item.user_name}</Text>
+        <Text style={styles.postTitle}>{item.user_name}</Text>
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
         <IconButton
           icon={() => (
             <Icon
@@ -158,7 +164,9 @@ const Threads = () => {
         <View style={styles.commentsContainer}>
           <Text style={styles.commentsTitle}>Comments:</Text>
           {item.comments.map((comment: any, index: number) => (
-            <Text key={index} style={styles.commentText}>{comment.user_name}: {comment.content}</Text>
+            <Text key={index} style={styles.commentText}>
+              {comment.user_name}: {comment.content}
+            </Text>
           ))}
         </View>
       )}
@@ -170,7 +178,10 @@ const Threads = () => {
             onChangeText={setNewComment}
             placeholder="Write a comment..."
           />
-          <Button mode="contained" onPress={() => addComment(item.id)} style={styles.commentSubmitButton}>
+          <Button
+            mode="contained"
+            onPress={() => addComment(item.id)}
+            style={styles.commentSubmitButton}>
             Submit
           </Button>
           <IconButton
@@ -182,7 +193,10 @@ const Threads = () => {
         </View>
       )}
       {commentsVisible && (
-        <Button mode="contained" onPress={() => setActivePostId(item.id)} style={styles.commentButton}>
+        <Button
+          mode="contained"
+          onPress={() => setActivePostId(item.id)}
+          style={styles.commentButton}>
           Comment
         </Button>
       )}
@@ -211,16 +225,19 @@ const Threads = () => {
       </View>
       <FlatList
         data={posts}
-        keyExtractor={(item) => item._id.toString()}
+        keyExtractor={item => item._id.toString()}
         renderItem={renderItem}
       />
-      
+
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
 
       <Portal>
-        <Modal visible={isModalVisible} onDismiss={toggleModal} contentContainerStyle={styles.modalContainer}>
+        <Modal
+          visible={isModalVisible}
+          onDismiss={toggleModal}
+          contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New Post</Text>
           <TextInput
             style={[styles.modalInput, styles.usernameStyle]}
@@ -236,16 +253,25 @@ const Threads = () => {
             value={newPost.content}
             onChangeText={text => handleInputChange('content', text)}
           />
-          <Button mode="contained" onPress={handleAddPost} style={styles.submitButton}>
+          <Button
+            mode="contained"
+            onPress={handleAddPost}
+            style={styles.submitButton}>
             Submit
           </Button>
-          <Button mode="outlined" onPress={toggleModal} style={styles.cancelButton}>
+          <Button
+            mode="outlined"
+            onPress={toggleModal}
+            style={styles.cancelButton}>
             Cancel
           </Button>
         </Modal>
 
         {/* Comment Modal */}
-        <Modal visible={commentModalVisible} onDismiss={closeCommentBox} contentContainerStyle={styles.modalContainer}>
+        <Modal
+          visible={commentModalVisible}
+          onDismiss={closeCommentBox}
+          contentContainerStyle={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add Comment</Text>
           <TextInput
             style={styles.commentInput}
@@ -255,7 +281,10 @@ const Threads = () => {
             value={newComment}
             onChangeText={setNewComment}
           />
-          <Button mode="contained" onPress={() => addComment(activePostId || 0)} style={styles.commentSubmitButton}>
+          <Button
+            mode="contained"
+            onPress={() => addComment(activePostId || 0)}
+            style={styles.commentSubmitButton}>
             Submit
           </Button>
           <IconButton
@@ -281,12 +310,12 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderRadius: 5,
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#ffffff',
     color: 'gray',
   },
   postContainer: {
     marginBottom: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'grey',
     padding: 16,
     borderRadius: 6,
     elevation: 4,

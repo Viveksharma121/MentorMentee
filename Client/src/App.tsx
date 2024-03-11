@@ -9,9 +9,9 @@ import type {PropsWithChildren} from 'react';
 import React, {useEffect} from 'react';
 import {StyleSheet, Text, useColorScheme, View} from 'react-native';
 
+import SplashScreen from 'react-native-splash-screen';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Navigator from '../Navigators/Navigator';
-import SplashScreen from 'react-native-splash-screen';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -44,16 +44,19 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
-  
   const isDarkMode = useColorScheme() === 'dark';
-      useEffect(() => {
+  useEffect(() => {
     SplashScreen.hide();
   }, []);
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
-  return <Navigator />;
+  return (
+    <View style={styles.container}>
+      <Navigator />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -61,6 +64,11 @@ const styles = StyleSheet.create({
     marginTop: 32,
     paddingHorizontal: 24,
   },
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+
   sectionTitle: {
     fontSize: 24,
     fontWeight: '600',

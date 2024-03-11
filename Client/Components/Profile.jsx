@@ -1,13 +1,19 @@
-import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Avatar, Card, Subheading, Title } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
+import React, {useCallback, useState} from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Config from 'react-native-config';
-import { useFocusEffect } from '@react-navigation/native';
-
-const ProfilePage = ({ navigation }) => {
+import {Avatar, Card, IconButton, Subheading, Title} from 'react-native-paper';
+const ProfilePage = () => {
+  const navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
   const [userDetails, setUserDetails] = useState(null);
   const [skills, setSkills] = useState([]);
@@ -22,7 +28,7 @@ const ProfilePage = ({ navigation }) => {
     }
   };
 
-  const getUsernameFromToken = async (token) => {
+  const getUsernameFromToken = async token => {
     try {
       if (!token) {
         throw new Error('Token not found');
@@ -53,7 +59,9 @@ const ProfilePage = ({ navigation }) => {
       setUserDetails(response.data);
 
       try {
-        const skillsResponse = await axios.get(`${BASE_URL}/api/${username}/skills`);
+        const skillsResponse = await axios.get(
+          `${BASE_URL}/api/${username}/skills`,
+        );
         setSkills(skillsResponse.data.skills || []);
         setProjects(skillsResponse.data.projects || []);
       } catch (error) {
@@ -67,10 +75,24 @@ const ProfilePage = ({ navigation }) => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      console.log(AsyncStorage);
+      await AsyncStorage.removeItem('token');
+      console.log('====================================');
+      console.log('after logout');
+      console.log('====================================');
+      console.log(AsyncStorage);
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error clearing token:', error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchUserDetails();
-    }, [])
+    }, []),
   );
 
   return (
@@ -82,8 +104,17 @@ const ProfilePage = ({ navigation }) => {
             label={userDetails.username[0].toUpperCase()}
             style={styles.avatar}
           />
+          <IconButton
+            icon="logout"
+            color="#000"
+            size={24}
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          />
           <Title style={styles.username}>{userDetails.username}</Title>
-          <Subheading style={styles.email}>Email: {userDetails.email}</Subheading>
+          <Subheading style={styles.email}>
+            Email: {userDetails.email}
+          </Subheading>
 
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Skills</Text>
@@ -128,6 +159,12 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     backgroundColor: '#f5f5f5',
   },
+  logoutButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+
   avatar: {
     backgroundColor: '#3498db',
     marginBottom: 10,
