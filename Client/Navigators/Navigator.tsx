@@ -83,6 +83,8 @@ import {ActivityIndicator, Image, ImageStyle} from 'react-native';
 import Login from '../Components/Login';
 import Profile from '../Components/Profile';
 import Register from '../Components/Register';
+import ResourceDetailScreen from '../Components/Resource/ResourceDetailScreen';
+import ResourceLibrary from '../Components/Resource/ResourceLibrary';
 import RoadmapComponent from '../Components/RoadMap';
 import ProjectForm from '../Components/Search/Searchpage';
 import SkillsForm from '../Components/SkillsForm';
@@ -120,6 +122,11 @@ const AppNavigator = () => {
         component={UserProfile}
         options={{headerShown: false}}
       />
+      <Stack.Screen
+        name="ResourceDetail"
+        component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -152,6 +159,11 @@ const AppNavigator2 = () => {
         component={UserProfile}
         options={{headerShown: false}}
       />
+      <Stack.Screen
+        name="ResourceDetail"
+        component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -179,6 +191,10 @@ const MainTabNavigator = () => {
             iconName = focused
               ? require('../assets/profile.png') // Image for active state
               : require('../assets/profile.png'); // Image for inactive state
+          } else if (route.name === 'Resource') {
+            iconName = focused
+              ? require('../assets/profile.png') // Image for active state
+              : require('../assets/profile.png'); // Image for inactive state
           }
 
           // Add outline style if focused
@@ -193,6 +209,7 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Profile" component={Profile} />
       <Tab.Screen name="SkillsForm" component={SkillsForm} />
       <Tab.Screen name="Search" component={ProjectForm} />
+      <Tab.Screen name="Resource" component={ResourceLibrary} />
     </Tab.Navigator>
   );
 };
