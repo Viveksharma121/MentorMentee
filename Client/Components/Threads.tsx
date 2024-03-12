@@ -80,7 +80,19 @@ const Threads = () => {
   const handleInputChange = (field: string, value: string) => {
     setNewPost({ ...newPost, [field]: value });
   };
-
+  const handleLogout = async () => {
+    try {
+      console.log(AsyncStorage);
+      await AsyncStorage.removeItem('token');
+      console.log('====================================');
+      console.log('after logout');
+      console.log('====================================');
+      console.log(AsyncStorage);
+      Navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error clearing token:', error);
+    }
+  };
   const handleAddPost = async () => {
     try {
       const newPostWithUsername = { ...newPost, user_name: username };
@@ -251,11 +263,11 @@ const Threads = () => {
           {/* Add your icons for notification, chat, and roadmaps here */}
           <IconButton
             icon="bell"
-            onPress={() => console.log('Notification icon pressed')}
+            onPress={handleLogout}
           />
           <IconButton
             icon="chat"
-            onPress={() => console.log('Chat icon pressed')}
+            onPress={() => Navigation.navigate('ChatGpt')}
           />
           <IconButton
             icon="map"
