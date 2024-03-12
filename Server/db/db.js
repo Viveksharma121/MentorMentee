@@ -22,6 +22,16 @@ const db = async () => {
     console.log("DB Connection failed" + error);
   }
 };
+const commentSchema = new mongoose.Schema({
+  user_name: {
+    type: String,
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+});
 
 const tweetSchema = new mongoose.Schema({
   id: {
@@ -52,6 +62,8 @@ const tweetSchema = new mongoose.Schema({
       },
     },
   ],
+  comments: [commentSchema],
+  savedBy: [{ userId: String, _id: mongoose.Schema.Types.ObjectId }],
 });
 
 const Tweet = mongoose.model("Tweet", tweetSchema);

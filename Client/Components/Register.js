@@ -1,23 +1,59 @@
 import {useNavigation} from '@react-navigation/native';
+import axios from 'axios'; // Import the axios library
 import React, {useState} from 'react';
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import Config from 'react-native-config';
 export default function Register() {
+  const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const handleRegister = () => {
-    navigation.navigate('AppAll');
+
+  const handleRegister = async () => {
+    try {
+      console.log('handle register called');
+      const response = await axios.post(`${BASE_URL}/user/register`, {
+        username,
+        email,
+        password,
+      });
+      console.log(response.data);
+
+      if (response.status === 200) {
+        // Registration successful, navigate to 'AppAll' with the username.
+        navigation.navigate('Login');
+      } else {
+        // Handle registration error, show alert or update state
+        Alert.alert(
+          'Registration Failed',
+          response.data.message || 'Something went wrong',
+        );
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Handle other errors as needed
+    }
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.inputView}>
+        <TextInput
+          value={username}
+          style={styles.inputText}
+          placeholder="Username"
+          placeholderTextColor="#AFAFAF"
+          onChangeText={username => setUsername(username)}
+        />
+      </View>
       <View style={styles.inputView}>
         <TextInput
           value={email}
