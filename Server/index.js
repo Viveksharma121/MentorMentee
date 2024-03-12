@@ -76,3 +76,39 @@ app.get("/getAllUsers", async (req, res) => {
     res.json(error);
   }
 });
+
+let messages = [];
+
+app.post('/sendMessage', async (req, res) => {
+  console.log("chat hitted")
+  const { input } = req.body;
+
+  // Add user message to the chat
+  messages.push({ text: input, user: 'user' });
+
+  try {
+    // Make a request to the OpenAI API
+    const response = await axios.post(
+      'https://api.openai.com/v1/engines/davinci-codex/completions',
+      {
+        prompt: messages.map((message) => message.text).join('\n') + '\n' + input,
+        max_tokens: 150,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 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',
+        },
+      }
+    );
+
+    // Add the chatbot's response to the chat
+    const botResponse = response.data.choices[0].text.trim();
+    messages.push({ text: botResponse, user: 'bot' });
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Error fetching response from OpenAI API:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});

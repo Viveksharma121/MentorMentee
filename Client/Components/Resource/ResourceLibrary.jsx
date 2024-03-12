@@ -1,24 +1,26 @@
-import {useNavigation} from '@react-navigation/native';
-import axios from 'axios';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Button,
   FlatList,
   Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
+  Button,
 } from 'react-native';
-import Config from 'react-native-config';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome for example
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import AddResourceForm from './AddResourceForm';
+import Config from 'react-native-config';
 
 const ResourceLibrary = () => {
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
   const [resources, setResources] = useState([]);
   const [showAddResourceModal, setShowAddResourceModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchResources();
@@ -27,10 +29,10 @@ const ResourceLibrary = () => {
   const fetchResources = () => {
     axios
       .get(`${BASE_URL}/api/resource/allResources`)
-      .then(response => {
+      .then((response) => {
         setResources(response.data);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error fetching resources:', error);
       });
   };
@@ -44,15 +46,33 @@ const ResourceLibrary = () => {
     fetchResources(); // Refresh resource list
   };
 
-  const navigateToDetailScreen = item => {
-    // Navigate to detail screen and pass the selected resource data
-    navigation.navigate('ResourceDetail', {resource: item});
+  const navigateToDetailScreen = (item) => {
+    navigation.navigate('ResourceDetail', { resource: item });
   };
 
-  const renderItem = ({item}) => (
+  const handleSearch = () => {
+    axios
+      .get(`${BASE_URL}/api/resource/searchResources`, {
+        params: { query: searchQuery },
+      })
+      .then((response) => {
+        setResources(response.data);
+      })
+      .catch((error) => {
+        console.error('Error searching resources:', error);
+      });
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    fetchResources(); // Reset to the default list when search is cleared
+  };
+
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.resourceContainer}
-      onPress={() => navigateToDetailScreen(item)}>
+      onPress={() => navigateToDetailScreen(item)}
+    >
       <View style={styles.iconContainer}>
         <Icon name="link" size={24} color="blue" />
       </View>
@@ -76,9 +96,23 @@ const ResourceLibrary = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Resource Library</Text>
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by title or category"
+          value={searchQuery}
+          onChangeText={(text) => setSearchQuery(text)}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <Icon name="search" size={20} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.clearButton} onPress={clearSearch}>
+          <Icon name="times" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={resources}
-        keyExtractor={item => item._id}
+        keyExtractor={(item) => item._id}
         renderItem={renderItem}
         contentContainerStyle={styles.flatListContainer}
       />
@@ -88,7 +122,8 @@ const ResourceLibrary = () => {
       <Modal
         visible={showAddResourceModal}
         animationType="slide"
-        onRequestClose={() => setShowAddResourceModal(false)}>
+        onRequestClose={() => setShowAddResourceModal(false)}
+      >
         <View style={styles.modalContainer}>
           <AddResourceForm onResourceAdded={handleResourceAdded} />
           <Button
@@ -181,6 +216,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: 'gray',
+    paddingLeft: 10,
+    color: '#fff',
+  },
+  searchButton: {
+    marginLeft: 10,
+    backgroundColor: '#3498db',
+    padding: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButton: {
+    marginLeft: 10,
+    backgroundColor: '#e74c3c',
+    padding: 10,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

@@ -1,12 +1,14 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+// SearchPage.js
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
+  Text
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Config from 'react-native-config';
 import MentorCard from './MentorCard'; // Import MentorCard component
 
@@ -20,7 +22,6 @@ const SearchPage = () => {
   // Function to fetch all users
   const getAllUsers = async () => {
     try {
-      console.log('hi');
       const response = await fetch(`${BASE_URL}/getAllUsers`);
       const data = await response.json();
       setResults(data);
@@ -30,40 +31,44 @@ const SearchPage = () => {
     }
   };
 
-  // Effect hook to fetch all users when component mounts
+  // Effect hook to fetch all users when the component mounts
   useEffect(() => {
     getAllUsers();
   }, []);
 
   // Function to filter users based on query
   const filterUsers = () => {
-    console.log(query);
-    if (!query) {
-      console.log(results);
-      setFilteredResults(results); // Reset to show all users if query is empty
+    if (query.trim() === '') {
+      setFilteredResults(results); // Reset to show all users if the query is empty
     } else {
       const filtered = results.filter(
-        user =>
+        (user) =>
           user.name.toLowerCase().includes(query.toLowerCase()) ||
-          (user.skills && user.skills.includes(query.toLowerCase())),
+          (user.skills && user.skills.includes(query.toLowerCase()))
       );
       setFilteredResults(filtered);
     }
   };
 
   // Handle text input change
-  const handleInputChange = text => {
+  const handleInputChange = (text) => {
     setQuery(text);
     filterUsers();
   };
 
-  // Function to navigate to user profile
-  const navigateToProfile = username => {
-    navigation.navigate('UserProfile', {username});
+  // Function to clear search and show all users
+  const clearSearch = () => {
+    setQuery('');
+    setFilteredResults(results);
+  };
+
+  // Function to navigate to the user profile
+  const navigateToProfile = (username) => {
+    navigation.navigate('UserProfile', { username });
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: '#000'}]}>
+    <View style={[styles.container, { backgroundColor: '#000' }]}>
       <View style={styles.searchBar}>
         <TextInput
           style={styles.input}
@@ -72,16 +77,23 @@ const SearchPage = () => {
           onChangeText={handleInputChange}
           placeholderTextColor="#fff" // Set placeholder text color
         />
+        {query.trim() !== '' && (
+          <TouchableOpacity onPress={clearSearch}>
+            {/* Add your clear/cross icon here */}
+            <Text style={{ color: 'white' }}>✖️</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
         style={styles.list}
         data={filteredResults} // Use filtered results
-        keyExtractor={item => item._id}
-        renderItem={({item}) => (
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => navigateToProfile(item.name)}>
+            onPress={() => navigateToProfile(item.name)}
+          >
             <MentorCard mentor={item} />
           </TouchableOpacity>
         )}
@@ -110,6 +122,9 @@ const styles = StyleSheet.create({
   },
   list: {
     marginTop: 12,
+  },
+  item: {
+    // Your custom styles for TouchableOpacity
   },
 });
 

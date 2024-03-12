@@ -1,10 +1,11 @@
+// MentorCard.js
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import UserAvatar from 'react-native-user-avatar';
 
-const MentorCard = ({mentor}) => {
+const MentorCard = ({ mentor }) => {
   // Function to generate a color based on the user's name
-  const generateColor = name => {
+  const generateColor = (name) => {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -22,13 +23,13 @@ const MentorCard = ({mentor}) => {
       <View style={styles.leftContainer}>
         <View style={styles.avatarContainer}>
           <UserAvatar
-            size={50} // Smaller avatar size
+            size={50}
             name={mentor.name}
             bgColor={generateColor(mentor.name)}
-            textStyle={{fontSize: 20, fontWeight: 'bold'}}
-            style={styles.avatar} // Add avatar style
-            borderWidth={2} // Add border width
-            borderColor="black" // Add border color
+            textStyle={{ fontSize: 20, fontWeight: 'bold' }}
+            style={styles.avatar}
+            borderWidth={2}
+            borderColor="black"
           />
         </View>
         <View style={styles.sessionsCompleted}>
@@ -38,17 +39,17 @@ const MentorCard = ({mentor}) => {
         </View>
       </View>
       <View style={styles.infoContainer}>
-        <Text style={[styles.name, {color: 'white'}]}>{mentor.name}</Text>
-        <Text style={[styles.subtitle, {color: 'blue'}]}>
+        <Text style={[styles.name, { color: 'white' }]}>{mentor.name}</Text>
+        <Text style={[styles.subtitle, { color: 'blue' }]}>
           🏢{mentor.position} ✨
         </Text>
-        <Text style={[styles.experience, {color: 'white'}]}>
+        <Text style={[styles.experience, { color: 'white' }]}>
           👨‍🎓2+ years of experience
         </Text>
-        <Text style={[styles.education, {color: 'white'}]}>
+        <Text style={[styles.education, { color: 'white' }]}>
           📖B.Tech from Thadomal Shahani Engineering College
         </Text>
-        <Text style={[styles.skills, {color: 'blue'}]}>
+        <Text style={[styles.skills, { color: 'blue' }]}>
           {mentor.skills.join(' | ')}
         </Text>
       </View>
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
     padding: 15,
     margin: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3,
     elevation: 5,

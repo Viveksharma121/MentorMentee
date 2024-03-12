@@ -90,7 +90,8 @@ import ProjectForm from '../Components/Search/Searchpage';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
-
+import ChatGpt from '../Components/ChatGpt'
+import SavedTweets from '../Components/SavedTweets'
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -125,6 +126,16 @@ const AppNavigator = () => {
       <Stack.Screen
         name="ResourceDetail"
         component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SavedTweets"
+        component={SavedTweets}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatGpt"
+        component={ChatGpt}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -162,6 +173,16 @@ const AppNavigator2 = () => {
       <Stack.Screen
         name="ResourceDetail"
         component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SavedTweets"
+        component={SavedTweets}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatGpt"
+        component={ChatGpt}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -210,6 +231,8 @@ const MainTabNavigator = () => {
       <Tab.Screen name="SkillsForm" component={SkillsForm} />
       <Tab.Screen name="Search" component={ProjectForm} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
+      <Tab.Screen name="SavedTweets" component={SavedTweets} />
+      {/* <Tab.Screen name="ChatGpt" component={ChatGpt} /> */}
     </Tab.Navigator>
   );
 };

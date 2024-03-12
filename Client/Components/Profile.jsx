@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useCallback, useState} from 'react';
+import React, { useCallback, useState } from 'react';
+
 import {
   ScrollView,
   StyleSheet,
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import Config from 'react-native-config';
-import {Avatar, Card, IconButton, Subheading, Title} from 'react-native-paper';
+import { Avatar, Card, IconButton, Subheading, Title } from 'react-native-paper';
 const ProfilePage = () => {
   const navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -147,7 +148,14 @@ const ProfilePage = () => {
         onPress={() => navigation.navigate('SkillsForm')}>
         <Text style={styles.addButtonText}>Add Skills / Projects</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('SavedTweets')}>
+        <Text style={styles.addButtonText}>View Saved Tweets</Text>
+      </TouchableOpacity>
+
     </ScrollView>
+
   );
 };
 

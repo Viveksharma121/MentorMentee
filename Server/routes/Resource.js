@@ -146,4 +146,19 @@ const calculateRating = async (likes, flag) => {
   return Math.round(rating * 100) / 100;
 };
 
+router.get('/searchResources', async (req, res) => {
+  const query = req.query.query;
+
+  try {
+    const resources = await Resource.find({
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { category: { $regex: query, $options: 'i' } },
+      ],
+    });
+    res.json(resources);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 module.exports = router;

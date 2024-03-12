@@ -67,11 +67,26 @@ const Threads = () => {
     useCallback(() => {
       userName();
       fetchPosts();
+      fetchSavedPosts();
     }, []),
   );
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newPost, setNewPost] = useState({user_name: '', content: ''});
+  const [savedPosts, setSavedPosts] = useState([]);
+
+  const fetchSavedPosts = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/thread/${username}/saved-tweets`,
+      );
+      console.log('neeche saved hai');
+      console.log(response.data);
+      setSavedPosts(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -81,7 +96,19 @@ const Threads = () => {
   const handleInputChange = (field: string, value: string) => {
     setNewPost({...newPost, [field]: value});
   };
-
+  const handleLogout = async () => {
+    try {
+      console.log(AsyncStorage);
+      await AsyncStorage.removeItem('token');
+      console.log('====================================');
+      console.log('after logout');
+      console.log('====================================');
+      console.log(AsyncStorage);
+      Navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error clearing token:', error);
+    }
+  };
   const handleAddPost = async () => {
     try {
       const newPostWithUsername = {...newPost, user_name: username};
@@ -111,6 +138,19 @@ const Threads = () => {
     }
   };
 
+  const saveTweet = async (postId: number) => {
+    try {
+      await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
+        user_name: username,
+        content: posts.find(post => post.id === postId)?.content,
+      });
+      fetchPosts();
+      fetchSavedPosts();
+    } catch (error) {
+      console.error('Error saving tweet:', error);
+    }
+  };
+
   const addComment = async (postId: number) => {
     try {
       await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
@@ -131,13 +171,6 @@ const Threads = () => {
     setCommentModalVisible(false);
     setNewComment('');
   };
-
-  // const toggleComments = () => {
-  //   setCommentsVisible(!commentsVisible);
-  //   setActivePostId(null);
-  //   setCommentModalVisible(false);
-  //   setNewComment('');
-  // };
 
   const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
@@ -166,6 +199,24 @@ const Threads = () => {
             />
           )}
           onPress={() => toggleComments(item.id)}
+        />
+        <IconButton
+          icon={() => (
+            <Icon
+              name={
+                savedPosts.some(savedPost => savedPost.id === item.id)
+                  ? 'bookmark'
+                  : 'bookmark-o'
+              }
+              size={24}
+              color={
+                savedPosts.some(savedPost => savedPost.id === item.id)
+                  ? '#111111'
+                  : '#000'
+              }
+            />
+          )}
+          onPress={() => saveTweet(item.id)}
         />
       </View>
       {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
@@ -226,13 +277,10 @@ const Threads = () => {
         {/* <Text style={styles.headerTitle}>Threads</Text> */}
         <View style={styles.headerIcons}>
           {/* Add your icons for notification, chat, and roadmaps here */}
-          <IconButton
-            icon="bell"
-            onPress={() => console.log('Notification icon pressed')}
-          />
+          <IconButton icon="bell" onPress={handleLogout} />
           <IconButton
             icon="chat"
-            onPress={() => console.log('Chat icon pressed')}
+            onPress={() => Navigation.navigate('ChatGpt')}
           />
           <IconButton
             icon="map"
@@ -317,6 +365,7 @@ const Threads = () => {
 };
 
 const styles = StyleSheet.create({
+  // ... (existing styles)
   container: {
     flex: 1,
     padding: 16,
@@ -467,6 +516,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  //  commentButton: {
+  //   marginTop: 10,
+  //   backgroundColor: '#305F72',
+  // },
 });
 
 export default Threads;

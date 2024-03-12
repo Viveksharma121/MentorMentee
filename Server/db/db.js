@@ -63,6 +63,7 @@ const tweetSchema = new mongoose.Schema({
     },
   ],
   comments: [commentSchema],
+  savedBy: [{ userId: String, _id: mongoose.Schema.Types.ObjectId }],
 });
 
 const Tweet = mongoose.model("Tweet", tweetSchema);
