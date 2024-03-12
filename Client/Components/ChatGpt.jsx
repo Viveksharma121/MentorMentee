@@ -36,7 +36,7 @@ const ChatbotScreen = () => {
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer sk-KEY BHEJA HAI GRP ME `,
+                        Authorization: `Bearer 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`,
                     },
                 }
             );

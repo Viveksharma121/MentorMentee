@@ -92,6 +92,7 @@ import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
 import ChatGpt from '../Components/ChatGpt'
 import SavedTweets from '../Components/SavedTweets'
+import EditPost from '../Components/EditPost'
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -136,6 +137,11 @@ const AppNavigator = () => {
       <Stack.Screen
         name="ChatGpt"
         component={ChatGpt}
+        options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="EditPost"
+        component={EditPost}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -183,6 +189,11 @@ const AppNavigator2 = () => {
       <Stack.Screen
         name="ChatGpt"
         component={ChatGpt}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPost}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

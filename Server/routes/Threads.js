@@ -102,6 +102,7 @@ router.post('/threads/:postId/comments', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+//saving name of user in tweet schema for saved tweet
 router.post('/save-tweet', async (req, res) => {
   const { user_name, content } = req.body;
 
@@ -118,12 +119,12 @@ router.post('/save-tweet', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+//get saved tweet
 router.get('/:username/saved-tweets', async (req, res) => {
   try {
     const username = req.params.username;
     console.log("saved tweets ka ",username);
-    // Assuming you have a User model with a method to find by username
-    // and a Tweet model with a method to find by IDs
+    
     const user = await User.findOne({ username: username });
     if (!user) {
       return res.status(404).send('User not found');
@@ -138,6 +139,7 @@ router.get('/:username/saved-tweets', async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+//delete saved tweet
 router.delete('/:user_name/:tweetId/delete-saved-tweet', async (req, res) => {
   const { user_name, tweetId } = req.params;
   console.log("delete ",user_name,tweetId);
@@ -157,6 +159,47 @@ router.delete('/:user_name/:tweetId/delete-saved-tweet', async (req, res) => {
   } catch (error) {
     console.error('Error deleting saved tweet:', error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+router.delete('/threads/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  console.log("tweet delete ka ",postId);
+  try {
+    // Find the post by ID
+    const post = await Tweet.findOneAndDelete({id: postId});
+    console.log("deleted tweet ",post);
+    res.status(204).send();
+    // // Check if the post exists
+    // if (!post) {
+    //   return res.status(404).json({ error: 'Post not found' });
+    // }
+    // // Delete the post
+    // await post.remove();
+    
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.put('/threads/edit/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const { content } = req.body;
+
+  try {
+    // Find the post by ID
+    const post = await Tweet.findOneAndUpdate({ id:postId }, { content }, { new: true });
+
+    // Check if the post exists
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Error editing post:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
