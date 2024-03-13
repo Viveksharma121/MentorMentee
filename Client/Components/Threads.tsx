@@ -1,24 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, { useCallback, useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import {
-  Button,
-  IconButton,
-  Modal,
-  Portal,
-  TextInput,
-} from 'react-native-paper';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import React, {useCallback, useState} from 'react';
+import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import Config from 'react-native-config';
+import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
+import Icon from 'react-native-vector-icons/FontAwesome';
 const Threads = () => {
   const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -53,7 +41,7 @@ const Threads = () => {
   }
 
   const toggleComments = (postId: number) => {
-    setVisibleComments((prevState) => ({
+    setVisibleComments(prevState => ({
       ...prevState,
       [postId]: !prevState[postId], // Toggle visibility
     }));
@@ -80,17 +68,17 @@ const Threads = () => {
       userName();
       fetchPosts();
       fetchSavedPosts();
-    }, [])
+    }, []),
   );
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({ user_name: '', content: '' });
+  const [newPost, setNewPost] = useState({user_name: '', content: ''});
   const [savedPosts, setSavedPosts] = useState([]);
 
   const fetchSavedPosts = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/thread/${username}/saved-tweets`
+        `${BASE_URL}/api/thread/${username}/saved-tweets`,
       );
       console.log('neeche saved hai');
       console.log(response.data);
@@ -102,11 +90,11 @@ const Threads = () => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setNewPost({ user_name: username, content: '' });
+    setNewPost({user_name: username, content: ''});
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setNewPost({ ...newPost, [field]: value });
+    setNewPost({...newPost, [field]: value});
   };
   const handleLogout = async () => {
     try {
@@ -123,10 +111,10 @@ const Threads = () => {
   };
   const handleAddPost = async () => {
     try {
-      const newPostWithUsername = { ...newPost, user_name: username };
+      const newPostWithUsername = {...newPost, user_name: username};
       const response = await axios.post(
         `${BASE_URL}/api/thread/threads`,
-        newPostWithUsername
+        newPostWithUsername,
       );
       setPosts([...posts, response.data]);
       fetchPosts();
@@ -139,7 +127,7 @@ const Threads = () => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        { userId: username }
+        {userId: username},
       );
       if (response.status === 200) {
         fetchPosts(); // Refresh posts to reflect the new like status
@@ -152,7 +140,7 @@ const Threads = () => {
     try {
       await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
         user_name: username,
-        content: posts.find((post) => post.id === postId)?.content,
+        content: posts.find(post => post.id === postId)?.content,
       });
       fetchPosts();
       fetchSavedPosts();
@@ -162,13 +150,10 @@ const Threads = () => {
   };
   const addComment = async (postId: number) => {
     try {
-      await axios.post(
-        `${BASE_URL}/api/thread/threads/${postId}/comments`,
-        {
-          user_name: username,
-          content: newComment,
-        }
-      );
+      await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
+        user_name: username,
+        content: newComment,
+      });
       setNewComment('');
       setActivePostId(null);
       setCommentModalVisible(false);
@@ -184,7 +169,7 @@ const Threads = () => {
   };
   const handleEditPost = async (postId: number) => {
     try {
-      const post = posts.find((post) => post.id === postId);
+      const post = posts.find(post => post.id === postId);
 
       // Check if the logged-in user is the author of the post
       if (post.user_name === username) {
@@ -192,7 +177,7 @@ const Threads = () => {
         // Set the post details in the state or context to be used in the edit form
 
         // Example using React Navigation
-        Navigation.navigate('EditPost', { postToEdit: post });
+        Navigation.navigate('EditPost', {postToEdit: post});
       } else {
         console.log("You don't have permission to edit this post.");
       }
@@ -202,16 +187,16 @@ const Threads = () => {
   };
   const handleDeletePost = async (postId: number) => {
     try {
-      const post = posts.find((post) => post.id === postId);
+      const post = posts.find(post => post.id === postId);
 
       // Check if the logged-in user is the author of the post
       if (post.user_name === username) {
         const response = await axios.delete(
-          `${BASE_URL}/api/thread/threads/${postId}`
+          `${BASE_URL}/api/thread/threads/${postId}`,
         );
         if (response.status === 204) {
           // Post deleted successfully, update the posts state
-          setPosts(posts.filter((post) => post.id !== postId));
+          setPosts(posts.filter(post => post.id !== postId));
         }
       } else {
         console.log("You don't have permission to delete this post.");
@@ -220,13 +205,13 @@ const Threads = () => {
       console.error('Error deleting post:', error);
     }
   };
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
         <Text style={styles.postTitle}>{item.user_name}</Text>
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
         <IconButton
           icon={() => (
             <Icon
@@ -252,17 +237,13 @@ const Threads = () => {
           icon={() => (
             <Icon
               name={
-                savedPosts.some(
-                  (savedPost) => savedPost.id === item.id
-                )
+                savedPosts.some(savedPost => savedPost.id === item.id)
                   ? 'bookmark'
                   : 'bookmark-o'
               }
               size={24}
               color={
-                savedPosts.some(
-                  (savedPost) => savedPost.id === item.id
-                )
+                savedPosts.some(savedPost => savedPost.id === item.id)
                   ? '#111111'
                   : '#000'
               }
@@ -273,52 +254,34 @@ const Threads = () => {
         {item.user_name === username && (
           <>
             <IconButton
-              icon={() => (
-                <Icon
-                  name="edit"
-                  size={24}
-                  color="#000"
-                />
-              )}
+              icon={() => <Icon name="edit" size={24} color="#000" />}
               onPress={() => handleEditPost(item.id)}
             />
             <IconButton
-              icon={() => (
-                <Icon
-                  name="trash"
-                  size={24}
-                  color="#FF0000"
-                />
-              )}
+              icon={() => <Icon name="trash" size={24} color="#FF0000" />}
               onPress={() => handleDeletePost(item.id)}
             />
           </>
         )}
       </View>
-      {visibleComments[item.id] &&
-        item.comments &&
-        item.comments.length > 0 ? (
+      {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
         <View style={styles.commentsContainer}>
           <Text style={styles.commentsTitle}>Comments:</Text>
           <FlatList
             data={item.comments}
-            keyExtractor={(comment, index) =>
-              (comment?.id ?? index).toString()
-            }
-            renderItem={({ item: comment }) => (
+            keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
+            renderItem={({item: comment}) => (
               <View style={styles.commentContainer}>
-                <Text style={styles.commentAuthor}>
-                  {comment.user_name}:
-                </Text>
-                <Text style={styles.commentContent}>
-                  {comment.content}
-                </Text>
+                <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
+                <Text style={styles.commentContent}>{comment.content}</Text>
               </View>
             )}
           />
         </View>
-      ) : visibleComments[item.id] &&
-        item.comments.length < 1 && <Text>No comments yet</Text>}
+      ) : (
+        visibleComments[item.id] &&
+        item.comments.length < 1 && <Text>No comments yet</Text>
+      )}
       {activePostId === item.id && (
         <View style={styles.commentInputContainer}>
           <TextInput
@@ -330,8 +293,7 @@ const Threads = () => {
           <Button
             mode="contained"
             onPress={() => addComment(item.id)}
-            style={styles.commentSubmitButton}
-          >
+            style={styles.commentSubmitButton}>
             Submit
           </Button>
           <IconButton
@@ -346,8 +308,7 @@ const Threads = () => {
         <Button
           mode="contained"
           onPress={() => setActivePostId(item.id)}
-          style={styles.commentButton}
-        >
+          style={styles.commentButton}>
           Comment
         </Button>
       )}
@@ -360,16 +321,14 @@ const Threads = () => {
         <IconButton icon="bell" onPress={handleLogout} />
         <IconButton
           icon="chat"
-          onPress={() => Navigation.navigate('ChatGpt')}
+          // onPress={() => Navigation.navigate('ChatGpt')}
+          onPress={() => Navigation.navigate('Home')}
         />
-        <IconButton
-          icon="map"
-          onPress={() => Navigation.navigate('RoadMap')}
-        />
+        <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} />
       </View>
       <FlatList
         data={posts}
-        keyExtractor={(item) => item._id.toString()}
+        keyExtractor={item => item._id.toString()}
         renderItem={renderItem}
       />
       <Pressable style={styles.addButton} onPress={toggleModal}>
@@ -379,8 +338,7 @@ const Threads = () => {
         <Modal
           visible={isModalVisible}
           onDismiss={toggleModal}
-          contentContainerStyle={styles.modalContent}
-        >
+          contentContainerStyle={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>New Post</Text>
             <IconButton
@@ -393,15 +351,14 @@ const Threads = () => {
           <TextInput
             label="Post Content"
             value={newPost.content}
-            onChangeText={(text) => handleInputChange('content', text)}
+            onChangeText={text => handleInputChange('content', text)}
             multiline
             style={styles.modalTextInput}
           />
           <Button
             mode="contained"
             onPress={handleAddPost}
-            style={styles.modalButton}
-          >
+            style={styles.modalButton}>
             Post
           </Button>
         </Modal>
@@ -409,7 +366,6 @@ const Threads = () => {
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

@@ -79,36 +79,275 @@ app.get("/getAllUsers", async (req, res) => {
 
 let messages = [];
 
-app.post('/sendMessage', async (req, res) => {
-  console.log("chat hitted")
+app.post("/sendMessage", async (req, res) => {
+  console.log("chat hitted");
   const { input } = req.body;
 
   // Add user message to the chat
-  messages.push({ text: input, user: 'user' });
+  messages.push({ text: input, user: "user" });
 
   try {
     // Make a request to the OpenAI API
     const response = await axios.post(
-      'https://api.openai.com/v1/engines/davinci-codex/completions',
+      "https://api.openai.com/v1/engines/davinci-codex/completions",
       {
-        prompt: messages.map((message) => message.text).join('\n') + '\n' + input,
+        prompt:
+          messages.map((message) => message.text).join("\n") + "\n" + input,
         max_tokens: 150,
       },
       {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer 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',
+          "Content-Type": "application/json",
+          Authorization:
+            "Bearer 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",
         },
       }
     );
 
     // Add the chatbot's response to the chat
     const botResponse = response.data.choices[0].text.trim();
-    messages.push({ text: botResponse, user: 'bot' });
+    messages.push({ text: botResponse, user: "bot" });
 
     res.json({ success: true, messages });
   } catch (error) {
-    console.error('Error fetching response from OpenAI API:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
+    console.error("Error fetching response from OpenAI API:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+});
+
+const crypto = require("crypto");
+const Chatroom = require("./model/chatroom");
+const Message = require("./model/message");
+const uuid = crypto.randomUUID();
+const { v4: uuidv4 } = require("uuid");
+
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header(
+//     "Access-Control-Allow-Methods",
+//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+//   );
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "x-access-token, Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   next();
+// });
+
+// app.get("/", (req, res) => {
+//   res.send("App is running");
+// });
+
+app.get("/users", async (req, res) => {
+  try {
+    // Fetch all users from the database
+    const users = await Model.find();
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+});
+
+// app.post("/register", async (req, res) => {
+//   try {
+//     const { name, email, password } = req.body;
+//     console.log(name, email, password);
+//     const result = await Model.create({ name, email, password });
+//     console.log(result);
+//     res.json(result);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Internal server error", error });
+//   }
+// });
+
+// app.post("/login", async (req, res) => {
+//   try {
+//     const result = await Model.findOne({
+//       email: req.body.email,
+//       password: req.body.password,
+//     });
+//     if (result) {
+//       // res.status(404).json({ message: "User exists" });
+//       res.status(200).send("User exists");
+
+//       // Create JWT token
+//       // jwt.sign({ user }, secretKey, { expiresIn: "1h" }, (err, token) => {
+//       //   if (err) {
+//       //     res.status(500).json({ error: "Failed to create token" });
+//       //   } else {
+//       //     res.json({ token });
+//       //   }
+//       // });
+//     } else {
+//       res.status(404).send("User does not exist");
+//       // res.status(404).json({ message: "User does not exist." });
+//     }
+//   } catch (err) {
+//     res.status(500).send("Error getting data: ");
+//   }
+// });
+
+app.post("/search", async (req, res) => {
+  try {
+    const result = await User.findOne({ username: req.body.username });
+    if (result) {
+      res.status(200).send({ userName: result.username });
+    } else {
+      res.status(404).send("user not found.");
+    }
+  } catch (err) {
+    console.log("Error: ", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// This will search a chatroom if it already exists, if not then creates a chatroom
+app.post("/chatroom", async (req, res) => {
+  try {
+    const { userName, myUsername } = req.body;
+    console.log(req.body);
+    // Check if a chatroom already exists for the participants
+    let existingChatroom = await Chatroom.findOne({
+      participants: { $all: [userName, myUsername] },
+    });
+    console.log(existingChatroom + "exist");
+    if (!existingChatroom) {
+      const chatroomId = uuidv4();
+      // If a chatroom doesn't exist, create a new one
+      const newChatroom = new Chatroom({
+        chatroomId: chatroomId, // You can generate a unique ID using a library like `uuid` or any other method
+        participants: [userName, myUsername],
+      });
+
+      // Save the new chatroom to the database
+      existingChatroom = await newChatroom.save();
+    }
+
+    res.json({
+      chatroomId: existingChatroom.chatroomId,
+      message: "New Chatroom created",
+    });
+  } catch (error) {
+    console.error("Error creating or finding chatroom:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// app.post("/homepage", async (req, res) => {
+//   const email = req.body.email;
+//   try {
+//     // Find chatrooms where the participants array includes your email
+//     const chatrooms = await Chatroom.find({ participants: email });
+
+//     // Extract other user's email from chatrooms
+//     const otherUsers = chatrooms.map((chatroom) => {
+//       return chatroom.participants.find((participant) => participant !== email);
+//     });
+
+//     res.json(otherUsers);
+//   } catch (error) {
+//     console.error("Error fetching chatrooms:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+// app.post("/homepage", async (req, res) => {
+//   const email = req.body.email;
+//   try {
+//     // Find chatrooms where the participants array includes your email
+//     const chatrooms = await Chatroom.find({ participants: email });
+
+//     // Construct the response with the other user's email for each chatroom
+//     const chatroomsWithOtherUsers = chatrooms.map((chatroom) => {
+//       // Find the email of the other participant
+//       const otherUser = chatroom.participants.find(
+//         (participant) => participant !== email
+//       );
+//       return {
+//         chatroomId: chatroom.chatroomId,
+//         otherUser: otherUser, // Include the other user's email in the response
+//       };
+//     });
+
+//     res.json(chatroomsWithOtherUsers); // Send the response with chatrooms and other users' emails
+//   } catch (error) {
+//     console.error("Error fetching chatrooms:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+app.post("/homepage", async (req, res) => {
+  const username = req.body.username;
+  console.log(username);
+  try {
+    // Find chatrooms where the participants array includes your email
+    const chatrooms = await Chatroom.find({ participants: username });
+
+    // Construct the response with the other user's name for each chatroom
+    const chatroomsWithOtherUsers = [];
+    for (const chatroom of chatrooms) {
+      // Find the email of the other participant
+      const otherUserName = chatroom.participants.find(
+        (participant) => participant !== username
+      );
+      console.log(otherUserName);
+      // Find the name associated with the other user's email
+      // const otherUser = await User.findOne({ username: otherUserName });
+      chatroomsWithOtherUsers.push({
+        chatroomId: chatroom.chatroomId,
+        otherUserName: otherUserName,
+      });
+    }
+
+    res.json(chatroomsWithOtherUsers); // Send the response with chatrooms, other users' and names
+  } catch (error) {
+    console.error("Error fetching chatrooms:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// This is to render all the messages when between 2 users at the start as well when any msg is sent.
+app.post("/messages", async (req, res) => {
+  try {
+    const { chatroomId } = req.body;
+    const messages = await Message.find({ chatroomId });
+
+    if (messages.length === 0) {
+      // If no messages found, return a custom response
+      return res
+        .status(404)
+        .json({ message: "No messages found for this chatroom" });
+    }
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// This will be activated when any of the 2 users send a message
+app.post("/message", async (req, res) => {
+  try {
+    const { chatroomId, sender, text } = req.body;
+    const messageId = uuidv4();
+
+    // Create a new message
+    const newMessage = new Message({
+      messageId,
+      chatroomId,
+      sender,
+      text,
+    });
+
+    // Save the message to the database
+    await newMessage.save();
+
+    // Send a success response
+    res.status(200).json({ message: "Message sent successfully" });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
