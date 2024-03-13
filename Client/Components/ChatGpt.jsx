@@ -36,7 +36,7 @@ const ChatbotScreen = () => {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer sk- token of gpt `,
+            Authorization: `Bearer sk-Grp se copy`,
           },
         },
       );

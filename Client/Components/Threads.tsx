@@ -7,7 +7,6 @@ import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import Config from 'react-native-config';
 import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
 const Threads = () => {
   const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -21,6 +20,7 @@ const Threads = () => {
   const [visibleComments, setVisibleComments] = useState<{
     [postId: number]: boolean;
   }>({});
+
   // Function to fetch posts
   async function fetchPosts() {
     try {
@@ -123,7 +123,6 @@ const Threads = () => {
       console.error('Error adding post:', error);
     }
   };
-
   const handleLike = async (postId: any) => {
     try {
       const response = await axios.put(
@@ -137,7 +136,6 @@ const Threads = () => {
       console.error('Error liking post:', error);
     }
   };
-
   const saveTweet = async (postId: number) => {
     try {
       await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
@@ -150,7 +148,6 @@ const Threads = () => {
       console.error('Error saving tweet:', error);
     }
   };
-
   const addComment = async (postId: number) => {
     try {
       await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
@@ -165,13 +162,49 @@ const Threads = () => {
       console.error('Error adding comment:', error);
     }
   };
-
   const closeCommentBox = () => {
     setActivePostId(null);
     setCommentModalVisible(false);
     setNewComment('');
   };
+  const handleEditPost = async (postId: number) => {
+    try {
+      const post = posts.find(post => post.id === postId);
 
+      // Check if the logged-in user is the author of the post
+      if (post.user_name === username) {
+        // Open a modal or navigate to another screen for editing
+        // Set the post details in the state or context to be used in the edit form
+
+        // Example using React Navigation
+        Navigation.navigate('EditPost', {postToEdit: post});
+      } else {
+        console.log("You don't have permission to edit this post.");
+      }
+    } catch (error) {
+      console.error('Error fetching post for editing:', error);
+    }
+  };
+  const handleDeletePost = async (postId: number) => {
+    try {
+      const post = posts.find(post => post.id === postId);
+
+      // Check if the logged-in user is the author of the post
+      if (post.user_name === username) {
+        const response = await axios.delete(
+          `${BASE_URL}/api/thread/threads/${postId}`,
+        );
+        if (response.status === 204) {
+          // Post deleted successfully, update the posts state
+          setPosts(posts.filter(post => post.id !== postId));
+        }
+      } else {
+        console.log("You don't have permission to delete this post.");
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
   const renderItem = ({item}: {item: any}) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
@@ -218,6 +251,18 @@ const Threads = () => {
           )}
           onPress={() => saveTweet(item.id)}
         />
+        {item.user_name === username && (
+          <>
+            <IconButton
+              icon={() => <Icon name="edit" size={24} color="#000" />}
+              onPress={() => handleEditPost(item.id)}
+            />
+            <IconButton
+              icon={() => <Icon name="trash" size={24} color="#FF0000" />}
+              onPress={() => handleDeletePost(item.id)}
+            />
+          </>
+        )}
       </View>
       {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
         <View style={styles.commentsContainer}>
@@ -237,7 +282,6 @@ const Threads = () => {
         visibleComments[item.id] &&
         item.comments.length < 1 && <Text>No comments yet</Text>
       )}
-
       {activePostId === item.id && (
         <View style={styles.commentInputContainer}>
           <TextInput
@@ -274,90 +318,49 @@ const Threads = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {/* <Text style={styles.headerTitle}>Threads</Text> */}
-        <View style={styles.headerIcons}>
-          {/* Add your icons for notification, chat, and roadmaps here */}
-          <IconButton icon="bell" onPress={handleLogout} />
-          <IconButton
-            icon="chat"
-            onPress={() => Navigation.navigate('ChatGpt')}
-          />
-          <IconButton
-            icon="map"
-            onPress={() => Navigation.navigate('RoadMap')}
-          />
-        </View>
+        <IconButton icon="bell" onPress={handleLogout} />
+        <IconButton
+          icon="chat"
+          // onPress={() => Navigation.navigate('ChatGpt')}
+          onPress={() => Navigation.navigate('Home')}
+        />
+        <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} />
       </View>
       <FlatList
         data={posts}
         keyExtractor={item => item._id.toString()}
         renderItem={renderItem}
       />
-
       <Pressable style={styles.addButton} onPress={toggleModal}>
         <Text style={styles.addButtonText}>+</Text>
       </Pressable>
-
       <Portal>
         <Modal
           visible={isModalVisible}
           onDismiss={toggleModal}
-          contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Add New Post</Text>
+          contentContainerStyle={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>New Post</Text>
+            <IconButton
+              icon="close"
+              size={24}
+              color="#000"
+              onPress={toggleModal}
+            />
+          </View>
           <TextInput
-            style={[styles.modalInput, styles.usernameStyle]}
-            placeholder="Username"
-            value={username}
-            editable={false}
-          />
-          <TextInput
-            style={[styles.modalInput, styles.modalInputContent]}
-            placeholder="Content"
-            multiline={true}
-            numberOfLines={4}
+            label="Post Content"
             value={newPost.content}
             onChangeText={text => handleInputChange('content', text)}
+            multiline
+            style={styles.modalTextInput}
           />
           <Button
             mode="contained"
             onPress={handleAddPost}
-            style={styles.submitButton}>
-            Submit
+            style={styles.modalButton}>
+            Post
           </Button>
-          <Button
-            mode="outlined"
-            onPress={toggleModal}
-            style={styles.cancelButton}>
-            Cancel
-          </Button>
-        </Modal>
-
-        {/* Comment Modal */}
-        <Modal
-          visible={commentModalVisible}
-          onDismiss={closeCommentBox}
-          contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Add Comment</Text>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Write a comment..."
-            multiline={true}
-            numberOfLines={4}
-            value={newComment}
-            onChangeText={setNewComment}
-          />
-          <Button
-            mode="contained"
-            onPress={() => addComment(activePostId || 0)}
-            style={styles.commentSubmitButton}>
-            Submit
-          </Button>
-          <IconButton
-            icon="close"
-            size={24}
-            color="#000"
-            onPress={closeCommentBox}
-          />
         </Modal>
       </Portal>
     </View>
@@ -365,7 +368,6 @@ const Threads = () => {
 };
 
 const styles = StyleSheet.create({
-  // ... (existing styles)
   container: {
     flex: 1,
     padding: 16,
@@ -516,10 +518,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  //  commentButton: {
-  //   marginTop: 10,
-  //   backgroundColor: '#305F72',
-  // },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  modalTextInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
+    minHeight: 100,
+  },
+  modalButton: {
+    backgroundColor: '#305F72',
+  },
 });
 
 export default Threads;

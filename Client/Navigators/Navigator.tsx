@@ -80,18 +80,22 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ImageStyle} from 'react-native';
+import ChatGpt from '../Components/ChatGpt';
+import EditPost from '../Components/EditPost';
 import Login from '../Components/Login';
 import Profile from '../Components/Profile';
 import Register from '../Components/Register';
 import ResourceDetailScreen from '../Components/Resource/ResourceDetailScreen';
 import ResourceLibrary from '../Components/Resource/ResourceLibrary';
 import RoadmapComponent from '../Components/RoadMap';
+import SavedTweets from '../Components/SavedTweets';
 import ProjectForm from '../Components/Search/Searchpage';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
-import ChatGpt from '../Components/ChatGpt'
-import SavedTweets from '../Components/SavedTweets'
+import ChatPage from '../Components/chatApp/ChatPage';
+import HomePage from '../Components/chatApp/Homepage';
+import SearchPage from '../Components/chatApp/SearchPage';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -136,6 +140,26 @@ const AppNavigator = () => {
       <Stack.Screen
         name="ChatGpt"
         component={ChatGpt}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPost}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Home"
+        component={HomePage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Searchh"
+        component={SearchPage}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -183,6 +207,26 @@ const AppNavigator2 = () => {
       <Stack.Screen
         name="ChatGpt"
         component={ChatGpt}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPost}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Home"
+        component={HomePage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Searchh"
+        component={SearchPage}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
