@@ -1,9 +1,10 @@
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome from react-native-vector-icons
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Config from 'react-native-config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatPage = ({ route }) => {
   const BASE_URL = Config.BASE_URL;
@@ -15,6 +16,31 @@ const ChatPage = ({ route }) => {
   const [showModal, setShowModal] = useState(false);
   const [rating, setRating] = useState(0);
   const [selectedStar, setSelectedStar] = useState(0);
+  const [ratingDone, setRatingDone] = useState(false);
+  const [userInitiatedChat, setUserInitiatedChat] = useState(false);
+
+  useEffect(() => {
+    fetchMessages();
+    checkRatingStatus();
+    checkUserInitiatedChat();
+  }, [chatroomId]);
+
+  const checkUserInitiatedChat = async () => {
+    try {
+      const initiatedChat = await AsyncStorage.getItem(`userInitiatedChat_${chatroomId}`);
+      setUserInitiatedChat(initiatedChat === 'true');
+    } catch (error) {
+      console.error('Error checking user-initiated chat status:', error);
+    }
+  };
+
+  const setUserInitiatedChatAsync = async (value) => {
+    try {
+      await AsyncStorage.setItem(`userInitiatedChat_${chatroomId}`, value.toString());
+    } catch (error) {
+      console.error('Error setting user-initiated chat status:', error);
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -23,6 +49,11 @@ const ChatPage = ({ route }) => {
       });
       if (response.status === 200) {
         setMessages(response.data);
+
+        // Check if the user initiated the chat
+        if (response.data.length > 0 && response.data[0].sender === myUserName) {
+          setUserInitiatedChat(true);
+        }
       } else if (response.status === 404) {
         setMessages([]);
       } else {
@@ -33,9 +64,14 @@ const ChatPage = ({ route }) => {
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [chatroomId]);
+  const checkRatingStatus = async () => {
+    try {
+      const hasRated = await AsyncStorage.getItem('hasRated');
+      setRatingDone(hasRated === 'true');
+    } catch (error) {
+      console.error('Error checking rating status:', error);
+    }
+  };
 
   const sendMessage = async () => {
     try {
@@ -47,6 +83,17 @@ const ChatPage = ({ route }) => {
 
       if (response.status === 200) {
         fetchMessages();
+
+        // If the user has already rated, set the End button visible
+        if (ratingDone) {
+          setRatingDone(false);
+        }
+
+        // If the user initiated the chat, set the End button visible
+        if (!userInitiatedChat) {
+          setUserInitiatedChat(true);
+          setUserInitiatedChatAsync(true);
+        }
       } else {
         console.error('Error while sending message:', response.data.error);
       }
@@ -78,9 +125,28 @@ const ChatPage = ({ route }) => {
   };
 
   const handleDonePress = async () => {
-    console.log(`User rated with ${rating} stars.`);
-    closeModal();
+    if (ratingDone) {
+      console.log('Rating already done.');
+      return;
+    }
 
+    console.log(`User rated with ${rating} stars.`);
+
+    const creditsResponse = await axios.post(
+      `${BASE_URL}/update-credits`,
+      { username: userName, actionType: 'Rating', rating: rating }
+    );
+
+    console.log("resource ka credits ", creditsResponse.data);
+
+    try {
+      await AsyncStorage.setItem('hasRated', 'true');
+      setRatingDone(true);
+    } catch (error) {
+      console.error('Error storing rating status:', error);
+    }
+
+    closeModal();
   };
 
   return (
@@ -89,9 +155,11 @@ const ChatPage = ({ route }) => {
         <TouchableOpacity onPress={() => navigateToUserProfile(userName)}>
           <Text style={styles.headerText}>{userName}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={openModal}>
-          <Text style={styles.endButton}>End</Text>
-        </TouchableOpacity>
+        {userInitiatedChat && !ratingDone && (
+          <TouchableOpacity onPress={openModal}>
+            <Text style={styles.endButton}>End</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -158,6 +226,7 @@ const ChatPage = ({ route }) => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

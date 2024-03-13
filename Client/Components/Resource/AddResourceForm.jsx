@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Config from 'react-native-config';
 
-const AddResourceForm = ({onResourceAdded}) => {
+const AddResourceForm = ({ onResourceAdded }) => {
   const BASE_URL = Config.BASE_URL;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -68,8 +68,13 @@ const AddResourceForm = ({onResourceAdded}) => {
         url,
         createdBy: username,
       })
-      .then(response => {
+      .then(async response => {
         console.log('Resource added:', response.data);
+        const creditsResponse = await axios.post(
+          `${BASE_URL}/update-credits`,
+          { username: username, actionType: 'resourceAdd' }
+        );
+        console.log("resource ka credits ", creditsResponse.data);
         // Clear form fields
         setTitle('');
         setDescription('');
@@ -96,7 +101,7 @@ const AddResourceForm = ({onResourceAdded}) => {
         onChangeText={setTitle}
       />
       <TextInput
-        style={[styles.input, {height: 100}]}
+        style={[styles.input, { height: 100 }]}
         placeholder="Description"
         placeholderTextColor="#000000"
         value={description}

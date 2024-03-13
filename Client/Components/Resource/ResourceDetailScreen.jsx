@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ScrollView,
   Share,
@@ -13,8 +13,8 @@ import {
 import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import YoutubePlayer from 'react-native-youtube-iframe';
-const ResourceDetailScreen = ({route}) => {
-  const {resource} = route.params;
+const ResourceDetailScreen = ({ route }) => {
+  const { resource } = route.params;
   const [data, setData] = useState(null);
   const BASE_URL = Config.BASE_URL;
   // Function to fetch resource details
@@ -37,7 +37,7 @@ const ResourceDetailScreen = ({route}) => {
 
   const formatDate = dateString => {
     const date = new Date(dateString);
-    const options = {day: 'numeric', month: 'long', year: 'numeric'};
+    const options = { day: 'numeric', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   };
   const getToken = async () => {
@@ -85,13 +85,31 @@ const ResourceDetailScreen = ({route}) => {
         console.error('Username not found in token');
         return;
       }
-
       const response = await axios.put(
         `${BASE_URL}/api/resource/incrementLikes/${resource._id}`,
         {
           username: username,
         },
       );
+      if (response.status === 200) {
+        console.log("created resource by ", resource.createdBy);
+        // Call the API to update credits when a user likes a post
+        // const credituser = await axios.get(`${BASE_URL}/credits/${resource.createdBy}`);
+
+
+        // const credituserdata = credituser.data[0].user_name;
+
+
+        // console.log("credit data  ", credituserdata);
+        // console.log("credit username ",credituser.data.user_name);
+        // Call the API to update credits when a user adds a comment
+
+        const creditsResponse = await axios.post(
+          `${BASE_URL}/update-credits`,
+          { username: resource.createdBy, actionType: 'resourcelike' }
+        );
+        console.log("resource ka credits ", creditsResponse.data);
+      }
       findResource();
     } catch (error) {
       console.log(error);

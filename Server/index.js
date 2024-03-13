@@ -1,5 +1,5 @@
 const express = require("express");
-const { db } = require("./db/db");
+const { db, Tweet } = require("./db/db");
 const StudentModel = require("./model/Student");
 const cors = require("cors");
 const PORT = process.env.PORT || 5000;
@@ -120,6 +120,7 @@ const Chatroom = require("./model/chatroom");
 const Message = require("./model/message");
 const uuid = crypto.randomUUID();
 const { v4: uuidv4 } = require("uuid");
+const Resource = require("./model/Resource");
 
 // app.use(function (req, res, next) {
 //   res.header("Access-Control-Allow-Origin", "*");
@@ -351,3 +352,80 @@ app.post("/message", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+app.get('/credits/:postId',async(req,res)=>{
+  try {
+    const postId=req.params.postId;
+    console.log(postId);
+    const credituser= await Tweet.find({id:postId});
+    console.log("credit of the user in backend ",credituser);
+    res.status(200).json(credituser);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
+
+app.get('/credits/:resId', async (req, res) => {
+  try {
+    const resId = req.params.resId;
+    console.log("Received resId:", resId);
+
+    const credituser = await Resource.findById(mongoose.Types.ObjectId(resId));
+    console.log("credit of the user in backend ", credituser);
+
+    res.status(200).json(credituser);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post('/update-credits', async (req, res) => {
+  const { username, actionType, rating } = req.body;
+  console.log(username, actionType, rating);
+
+  try {
+    let creditsToAdd = 0;
+
+    switch (actionType) {
+      case 'comment':
+        creditsToAdd = 5;
+        break;
+      case 'like':
+        creditsToAdd = 1;
+        break;
+      case 'resourcelike':
+        creditsToAdd = 10;
+        break;
+      case 'resourceAdd':
+        creditsToAdd = 50;
+        break;
+      case 'Rating':
+        // Adjust the conversion from rating to credits as per your requirement
+        // This is just an example, adjust it based on your business logic
+        creditsToAdd = rating * 20;
+        break;
+      default:
+        break;
+    }
+
+    if (creditsToAdd > 0) {
+      const user = await User.findOneAndUpdate(
+        { username },
+        { $inc: { credits: creditsToAdd } },
+        { new: true }
+      );
+
+      console.log(`${username} ke credit => ${user.credits}`);
+      return res.json({ success: true, credits: user.credits });
+    } else {
+      return res.json({ success: false, message: 'Invalid action type' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+

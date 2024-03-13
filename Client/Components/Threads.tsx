@@ -123,19 +123,43 @@ const Threads = () => {
       console.error('Error adding post:', error);
     }
   };
+
   const handleLike = async (postId: any) => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        {userId: username},
+        { userId: username },
       );
+  
       if (response.status === 200) {
-        fetchPosts(); // Refresh posts to reflect the new like status
+        // Call the API to update credits when a user likes a post
+      const credituser=await axios.get(`${BASE_URL}/credits/${postId}`);
+
+      const credituserdata=credituser.data[0].user_name;
+
+
+      console.log("credit data  ",credituserdata);
+      // console.log("credit username ",credituser.data.user_name);
+      // Call the API to update credits when a user adds a comment
+      
+      const creditsResponse = await axios.post(
+        `${BASE_URL}/update-credits`,
+        { username:credituserdata, actionType: 'comment' }
+      );
+  
+        if (creditsResponse.data.success) {
+          // Refresh posts to reflect the new like status
+          fetchPosts();
+        } else {
+          console.error('Failed to update credits:', creditsResponse.data.message);
+        }
       }
     } catch (error) {
       console.error('Error liking post:', error);
     }
   };
+
+  
   const saveTweet = async (postId: number) => {
     try {
       await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
@@ -154,14 +178,34 @@ const Threads = () => {
         user_name: username,
         content: newComment,
       });
-      setNewComment('');
-      setActivePostId(null);
-      setCommentModalVisible(false);
-      fetchPosts();
+
+
+      const credituser=await axios.get(`${BASE_URL}/credits/${postId}`);
+
+      const credituserdata=credituser.data[0].user_name;
+
+
+      console.log("credit data  ",credituserdata);
+      // console.log("credit username ",credituser.data.user_name);
+      // Call the API to update credits when a user adds a comment
+      const creditsResponse = await axios.post(
+        `${BASE_URL}/update-credits`,
+        { username:credituserdata, actionType: 'comment' }
+      );
+  
+      if (creditsResponse.data.success) {
+        setNewComment('');
+        setActivePostId(null);
+        setCommentModalVisible(false);
+        fetchPosts();
+      } else {
+        console.error('Failed to update credits:', creditsResponse.data.message);
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
+  
   const closeCommentBox = () => {
     setActivePostId(null);
     setCommentModalVisible(false);
