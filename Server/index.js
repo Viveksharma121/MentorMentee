@@ -25,6 +25,7 @@ const sessionConfig = {
 const passport = require("passport");
 const LocalStragery = require("passport-local");
 const User = require("./model/User");
+const Notification=require("./model/Notification");
 //to use sessions
 app.use(session(sessionConfig));
 //to use passport
@@ -192,7 +193,7 @@ app.get("/users", async (req, res) => {
 
 app.post("/search", async (req, res) => {
   try {
-    const result = await User.findOne({ username: req.body.username });
+    const result = await User.findOne({ email: req.body.username });
     if (result) {
       res.status(200).send({ userName: result.username });
     } else {
@@ -429,3 +430,113 @@ app.post('/update-credits', async (req, res) => {
 });
 
 
+app.get('/chatroomId', async (req, res) => {
+  const { participant1, participant2 } = req.query;
+
+  try {
+    const chatroom = await Chatroom.findOne({
+      participants: { $all: [participant1, participant2] }
+    });
+
+    if (!chatroom) {
+      return res.status(404).json({ error: 'Chatroom not found' });
+    }
+
+    res.json({ chatroomId: chatroom.chatroomId });
+  } catch (error) {
+    console.error('Error fetching chatroomId:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/:username/credits', async (req, res) => {
+  const { username } = req.params;
+  try {
+      const user = await User.findOne({ username });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      res.json({ credits: user.credits });
+  } catch (error) {
+      console.error('Error fetching user credits:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Route to deduct credits from user's account
+app.post('/deduct-credits', async (req, res) => {
+  const { username, price } = req.body;
+  try {
+      const user = await User.findOne({ username });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      if (user.credits < price) {
+          return res.status(400).json({ message: 'Insufficient credits' });
+      }
+      user.credits -= price;
+      await user.save();
+      res.json({ message: 'Credits deducted successfully' });
+  } catch (error) {
+      console.error('Error deducting credits:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.post('/send-notification', async (req, res) => {
+  try {
+    // Extract sender, receiver, and message from request body
+    const { sender, receiver, message } = req.body;
+
+    // Create a new notification object
+    const notification = new Notification({
+      sender,
+      receiver,
+      message
+    });
+
+    // Save the notification to the database
+    await notification.save();
+    console.log("notification saved ",notification);
+    // Respond with a success message
+    res.status(200).json({ message: 'Notification sent successfully' });
+  } catch (error) {
+    // If an error occurs, respond with an error message
+    console.error('Error sending notification:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/notifications/:username', async (req, res) => {
+  const { username } = req.params;
+  console.log("backend notification USername ",username);
+  try {
+    // Query the database to find notifications where the receiver is the provided username
+    const notifications = await Notification.find({ receiver: username });
+
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete("/notifications/:id", async (req, res) => {
+  const notificationId = req.params.id;
+
+  try {
+    // Find the notification by ID and delete it
+    const deletedNotification = await Notification.findByIdAndDelete(
+      notificationId
+    );
+
+    if (!deletedNotification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.status(200).json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting notification:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});

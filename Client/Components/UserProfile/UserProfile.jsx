@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -11,21 +11,47 @@ import {
 import Config from 'react-native-config';
 import ProjectSlider from './ProjectSlider';
 import SkillSlider from './SkillSlider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import base64 from 'base-64';
 
-const UserProfile = ({route}) => {
+const UserProfile = ({ route, navigation }) => {
   const BASE_URL = Config.BASE_URL;
-  const {username} = route.params;
+  const username = route.params.userName;
+  console.log("user getting from chat", route.params.userName);
+  console.log("fetched user ", username);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('skills');
   const [tweets, setTweets] = useState([]);
+  const [Myusername, MysetUsername] = useState(null);
+
+  useEffect(() => {
+    const Myusername = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (!token) {
+          throw new Error('Token not found');
+        }
+        const [, payload] = token.split('.');
+        const decodedPayload = base64.decode(payload);
+        const payloadObject = JSON.parse(decodedPayload);
+        MysetUsername(payloadObject.username.toString());
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+    };
+
+    Myusername();
+
+    console.log("USER Logged in ", Myusername);
+    console.log("User To chat ", username);
+  }, [username]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(
-          `${BASE_URL}/api/searchitem?username=${username}`,
+        const response = await axios.get(`${BASE_URL}/api/searchitem?username=${username}`,
         );
         const data = response.data;
         setUserData(data);
@@ -53,9 +79,26 @@ const UserProfile = ({route}) => {
     getAllTweets();
   }, [BASE_URL, username]);
 
-  const handleAskButtonPress = () => {
-    console.log('Ask button pressed');
+  const handleAskButtonPress = async () => {
+    try {
+      // Make a request to the backend to fetch the chatroomId
+      const response = await axios.get(`${BASE_URL}/chatroomId`, {
+        params: {
+          participant1: username, // First participant
+          participant2: Myusername // Second participant
+        }
+      });
+
+      const { chatroomId } = response.data;
+      console.log(chatroomId);
+      // Assuming `Myusername` is the currently logged-in user's username
+      navigation.navigate('ChatPage', { userName: username, myUserName: Myusername, chatroomId: chatroomId });
+    } catch (error) {
+      console.error('Error fetching chatroomId:', error);
+      // Handle error appropriately
+    }
   };
+
 
   const handleFollowButtonPress = () => {
     console.log('Follow button pressed');
@@ -153,7 +196,7 @@ const UserProfile = ({route}) => {
 
           <View style={styles.tweetsContainer}>
             <Text style={styles.tweetsTitle}>All Tweets</Text>
-            <ScrollView style={{maxHeight: 300}}>
+            <ScrollView style={{ maxHeight: 300 }}>
               {tweets.map((tweet, index) => (
                 <View key={tweet._id} style={styles.tweetContainer}>
                   <Text style={styles.tweetContent}>{tweet.content}</Text>

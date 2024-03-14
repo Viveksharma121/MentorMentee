@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ChatPage = ({ route }) => {
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
-  const { chatroomId, userName, myUserName } = route.params || {};
+  const { chatroomId, userName, myUserName } = route.params;
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
@@ -17,64 +17,50 @@ const ChatPage = ({ route }) => {
   const [rating, setRating] = useState(0);
   const [selectedStar, setSelectedStar] = useState(0);
   const [ratingDone, setRatingDone] = useState(false);
-  const [initiatedChat, setInitiatedChat] = useState(false);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      checkUserInitiatedChat();
-    }, [])
-  );
+  const [showEndButton, setShowEndButton] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // State to track whether user is typing
 
   useEffect(() => {
-    fetchMessages();
-    checkRatingStatus();
+    (async () => {
+      await fetchMessages();
+      await checkRatingStatus();
+    })();
   }, [chatroomId]);
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.post(`${BASE_URL}/messages`, {
-        chatroomId,
-      });
+      const response = await axios.post(`${BASE_URL}/messages`, { chatroomId });
       if (response.status === 200) {
         setMessages(response.data);
-
-        // Check if the user initiated the chat
-        if (response.data.length > 0 && response.data[0].sender === myUserName) {
-          setInitiatedChat(true);
-        }
-      } else if (response.status === 404) {
-        setMessages([]);
+        await checkAndSetInitialSender(response.data);
       } else {
-        console.error('Error:', response.data.error);
+        console.error('Error:', response.statusText);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   };
 
-  const checkUserInitiatedChat = async () => {
-    try {
-      const response = await axios.post(`${BASE_URL}/messages`, {
-        chatroomId,
-      });
-      if (response.status === 200) {
-        // Check if the user initiated the chat
-        if (response.data.length > 0 && response.data[0].sender === myUserName) {
-          setInitiatedChat(true);
-        }
-      } else if (response.status === 404) {
-        setMessages([]);
-      } else {
-        console.error('Error:', response.data.error);
+  const checkAndSetInitialSender = async (newMessages) => {
+    const storedSender = await AsyncStorage.getItem(`${chatroomId}_initialSender`);
+    if (!storedSender && newMessages.length > 0) {
+      const initialSender = newMessages[0].sender;
+      await AsyncStorage.setItem(`${chatroomId}_initialSender`, initialSender);
+      setShowEndButton(initialSender === myUserName);
+    } else if (storedSender === myUserName) {
+      setShowEndButton(true);
+    } else if (myUserName === userName) {
+      // Check if the initial sender is the other user
+      const initialSender = newMessages[0].sender;
+      if (initialSender === userName) {
+        setShowEndButton(true);
       }
-    } catch (error) {
-      console.error('Error checking user initiated chat:', error);
     }
   };
 
   const checkRatingStatus = async () => {
     try {
-      const hasRated = await AsyncStorage.getItem('hasRated');
+      const hasRated = await AsyncStorage.getItem(`${chatroomId}_hasRated`);
       setRatingDone(hasRated === 'true');
     } catch (error) {
       console.error('Error checking rating status:', error);
@@ -84,28 +70,31 @@ const ChatPage = ({ route }) => {
   const sendMessage = async () => {
     try {
       const response = await axios.post(`${BASE_URL}/message`, {
-        chatroomId: chatroomId,
+        chatroomId,
         sender: myUserName,
         text: message,
       });
-
       if (response.status === 200) {
+        setMessage(''); // Clear the input after sending
         fetchMessages();
+        setShowEndButton(response.data.sender === myUserName); // Toggle the End button visibility based on sender
 
-        // If the user has already rated, set the End button visible
-        if (ratingDone) {
-          setRatingDone(false);
-        }
-
-        // If the user initiated the chat, set the End button visible
-        if (!initiatedChat) {
-          setInitiatedChat(true);
-        }
+        // Send notification
+        await sendNotification(myUserName, userName, 'sent you a message');
       } else {
         console.error('Error while sending message:', response.data.error);
       }
     } catch (err) {
-      console.error('Error sending axios post request: ', err);
+      console.error('Error sending axios post request:', err);
+    }
+  };
+
+  const sendNotification = async (sender, receiver, message) => {
+    try {
+      // Assuming the server route for sending notifications is '/send-notification'
+      await axios.post(`${BASE_URL}/send-notification`, { sender, receiver, message });
+    } catch (error) {
+      console.error('Error sending notification:', error);
     }
   };
 
@@ -119,8 +108,21 @@ const ChatPage = ({ route }) => {
     scrollViewRef.current.scrollToEnd({ animated: true });
   };
 
-  const navigateToUserProfile = (username) => {
-    navigation.navigate('UserProfile', { username });
+  const navigateToUserProfile = () => {
+    navigation.navigate('UserProfile', { userName });
+  };
+
+  const handleDonePress = async () => {
+    await AsyncStorage.setItem(`${chatroomId}_hasRated`, 'true');
+    const creditsResponse = await axios.post(
+      `${BASE_URL}/update-credits`,
+      { username: userName, actionType: 'Rating', rating: rating }
+    );
+
+    console.log("resource ka credits ", creditsResponse.data)
+    setRatingDone(true);
+    setShowEndButton(false);
+    closeModal();
   };
 
   const openModal = () => setShowModal(true);
@@ -131,38 +133,18 @@ const ChatPage = ({ route }) => {
     setSelectedStar(selectedRating);
   };
 
-  const handleDonePress = async () => {
-    if (ratingDone) {
-      console.log('Rating already done.');
-      return;
-    }
-
-    console.log(`User rated with ${rating} stars.`);
-
-    const creditsResponse = await axios.post(
-      `${BASE_URL}/update-credits`,
-      { username: userName, actionType: 'Rating', rating: rating }
-    );
-
-    console.log("resource ka credits ", creditsResponse.data);
-
-    try {
-      await AsyncStorage.setItem('hasRated', 'true');
-      setRatingDone(true);
-    } catch (error) {
-      console.error('Error storing rating status:', error);
-    }
-
-    closeModal();
+  const handleTyping = (text) => {
+    setMessage(text);
+    setIsTyping(!!text.trim()); // Update typing state based on whether input has content
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigateToUserProfile(userName)}>
+        <TouchableOpacity onPress={navigateToUserProfile}>
           <Text style={styles.headerText}>{userName}</Text>
         </TouchableOpacity>
-        {initiatedChat && !ratingDone && (
+        {showEndButton && !ratingDone && (
           <TouchableOpacity onPress={openModal}>
             <Text style={styles.endButton}>End</Text>
           </TouchableOpacity>
@@ -170,40 +152,33 @@ const ChatPage = ({ route }) => {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
         ref={scrollViewRef}
+        contentContainerStyle={styles.scrollViewContent}
         onContentSizeChange={scrollToBottom}>
-        <View style={styles.messageContainer}>
-          {messages.map((message, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.messageBubble,
-                message.sender === myUserName ? styles.sentMessage : styles.receivedMessage,
-              ]}>
-              <Text style={styles.messageText}>{message.text}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {messages.map((msg, index) => (
+          <View
+            key={index}
+            style={[
+              styles.messageBubble,
+              msg.sender === myUserName ? styles.sentMessage : styles.receivedMessage,
+            ]}>
+            <Text style={styles.messageText}>{msg.text}</Text>
+          </View>
+        ))}
       </ScrollView>
 
       <View style={styles.inputContainer}>
         <TextInput
           value={message}
+          onChangeText={handleTyping} // Update message state and typing state
           style={styles.textInput}
-          placeholder="Type your message..."
-          placeholderTextColor="#aaa"
-          onChangeText={(message) => setMessage(message)}
+          placeholder="Type your message here..."
         />
-        <TouchableOpacity
-          style={styles.sendButtonContainer}
-          onPress={() => sendMessage()}
-          activeOpacity={0.8}>
+        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Rating Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -219,12 +194,11 @@ const ChatPage = ({ route }) => {
                     name={star <= selectedStar ? 'star' : 'star-o'}
                     size={40}
                     color="#ffd700"
-                    style={styles.starIcon}
                   />
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity onPress={handleDonePress}>
+            <TouchableOpacity onPress={handleDonePress} style={styles.doneButton}>
               <Text style={styles.doneText}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -233,9 +207,6 @@ const ChatPage = ({ route }) => {
     </View>
   );
 };
-
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -266,9 +237,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
-  },
-  messageContainer: {
-    flex: 1,
   },
   messageBubble: {
     maxWidth: '80%',
@@ -312,7 +280,7 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 16,
   },
-  sendButtonContainer: {
+  sendButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 20,
     paddingVertical: 15,

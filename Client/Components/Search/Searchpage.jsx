@@ -1,13 +1,5 @@
-// SearchPage.js
 import React, { useEffect, useState } from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-  Text
-} from 'react-native';
+import { FlatList, StyleSheet, TextInput, TouchableOpacity, View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Config from 'react-native-config';
 import MentorCard from './MentorCard'; // Import MentorCard component
@@ -16,7 +8,7 @@ const SearchPage = () => {
   const BASE_URL = Config.BASE_URL;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [filteredResults, setFilteredResults] = useState([]); // State to hold filtered results
+  const [filteredResults, setFilteredResults] = useState([]);
   const navigation = useNavigation();
 
   // Function to fetch all users
@@ -64,7 +56,7 @@ const SearchPage = () => {
 
   // Function to navigate to the user profile
   const navigateToProfile = (username) => {
-    navigation.navigate('UserProfile', { username });
+    navigation.navigate('UserProfile', { userName: username }); // Pass the correct identifier for the user
   };
 
   return (
@@ -75,11 +67,10 @@ const SearchPage = () => {
           placeholder="Type name or skills here"
           value={query}
           onChangeText={handleInputChange}
-          placeholderTextColor="#fff" // Set placeholder text color
+          placeholderTextColor="#fff"
         />
         {query.trim() !== '' && (
           <TouchableOpacity onPress={clearSearch}>
-            {/* Add your clear/cross icon here */}
             <Text style={{ color: 'white' }}>✖️</Text>
           </TouchableOpacity>
         )}
@@ -87,12 +78,12 @@ const SearchPage = () => {
 
       <FlatList
         style={styles.list}
-        data={filteredResults} // Use filtered results
-        keyExtractor={(item) => item._id}
+        data={filteredResults}
+        keyExtractor={(item) => item._id} // Assuming _id is the unique identifier for each user
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => navigateToProfile(item.name)}
+            onPress={() => navigateToProfile(item.name)} // Pass the correct identifier for the user
           >
             <MentorCard mentor={item} />
           </TouchableOpacity>

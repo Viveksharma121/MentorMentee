@@ -96,6 +96,8 @@ import UserProfile from '../Components/UserProfile/UserProfile';
 import ChatPage from '../Components/chatApp/ChatPage';
 import HomePage from '../Components/chatApp/Homepage';
 import SearchPage from '../Components/chatApp/SearchPage';
+import BuyItemsPage from '../Components/BuyItemsPage';
+import Notification from '../Components/Notification';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -161,6 +163,21 @@ const AppNavigator = () => {
         name="Searchh"
         component={SearchPage}
         options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="ChatPage"
+        component={ChatPage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BuyItemsPage"
+        component={BuyItemsPage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -229,6 +246,21 @@ const AppNavigator2 = () => {
         component={SearchPage}
         options={{headerShown: false}}
       />
+       <Stack.Screen
+        name="ChatPage"
+        component={ChatPage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="BuyItemsPage"
+        component={BuyItemsPage}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 };
@@ -275,7 +307,8 @@ const MainTabNavigator = () => {
       <Tab.Screen name="SkillsForm" component={SkillsForm} />
       <Tab.Screen name="Search" component={ProjectForm} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
-      <Tab.Screen name="SavedTweets" component={SavedTweets} />
+      <Tab.Screen name="BuyItemsPage" component={BuyItemsPage} />
+      <Tab.Screen name="Notification" component={Notification} />
       {/* <Tab.Screen name="ChatGpt" component={ChatGpt} /> */}
     </Tab.Navigator>
   );
