@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import Config from 'react-native-config';
 import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
@@ -20,6 +20,7 @@ const Threads = () => {
   const [visibleComments, setVisibleComments] = useState<{
     [postId: number]: boolean;
   }>({});
+  const [notificationCount, setNotificationCount] = useState<number>(0);
 
   // Function to fetch posts
   async function fetchPosts() {
@@ -39,6 +40,22 @@ const Threads = () => {
       console.log(JSON.stringify(error));
     }
   }
+  //fetch notification count
+
+  const fetchNotifications = async () => {
+    try {
+      console.log(username + 'fetch noti ka username');
+      const response = await axios.get(`${BASE_URL}/notifications/${username}`);
+      if (response.status === 200) {
+        setNotificationCount(response.data.length);
+        console.log(response.data.length);
+      } else {
+        console.error('Error:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
 
   const toggleComments = (postId: number) => {
     setVisibleComments(prevState => ({
@@ -70,6 +87,9 @@ const Threads = () => {
       fetchSavedPosts();
     }, []),
   );
+  useEffect(() => {
+    fetchNotifications();
+  }, [username]);
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newPost, setNewPost] = useState({user_name: '', content: ''});
@@ -128,30 +148,32 @@ const Threads = () => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        { userId: username },
+        {userId: username},
       );
-  
+
       if (response.status === 200) {
         // Call the API to update credits when a user likes a post
-      const credituser=await axios.get(`${BASE_URL}/credits/${postId}`);
+        const credituser = await axios.get(`${BASE_URL}/credits/${postId}`);
 
-      const credituserdata=credituser.data[0].user_name;
+        const credituserdata = credituser.data[0].user_name;
 
+        console.log('credit data  ', credituserdata);
+        // console.log("credit username ",credituser.data.user_name);
+        // Call the API to update credits when a user adds a comment
 
-      console.log("credit data  ",credituserdata);
-      // console.log("credit username ",credituser.data.user_name);
-      // Call the API to update credits when a user adds a comment
-      
-      const creditsResponse = await axios.post(
-        `${BASE_URL}/update-credits`,
-        { username:credituserdata, actionType: 'comment' }
-      );
-  
+        const creditsResponse = await axios.post(`${BASE_URL}/update-credits`, {
+          username: credituserdata,
+          actionType: 'comment',
+        });
+
         if (creditsResponse.data.success) {
           // Refresh posts to reflect the new like status
           fetchPosts();
         } else {
-          console.error('Failed to update credits:', creditsResponse.data.message);
+          console.error(
+            'Failed to update credits:',
+            creditsResponse.data.message,
+          );
         }
       }
     } catch (error) {
@@ -159,7 +181,6 @@ const Threads = () => {
     }
   };
 
-  
   const saveTweet = async (postId: number) => {
     try {
       await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
@@ -179,33 +200,34 @@ const Threads = () => {
         content: newComment,
       });
 
+      const credituser = await axios.get(`${BASE_URL}/credits/${postId}`);
 
-      const credituser=await axios.get(`${BASE_URL}/credits/${postId}`);
+      const credituserdata = credituser.data[0].user_name;
 
-      const credituserdata=credituser.data[0].user_name;
-
-
-      console.log("credit data  ",credituserdata);
+      console.log('credit data  ', credituserdata);
       // console.log("credit username ",credituser.data.user_name);
       // Call the API to update credits when a user adds a comment
-      const creditsResponse = await axios.post(
-        `${BASE_URL}/update-credits`,
-        { username:credituserdata, actionType: 'comment' }
-      );
-  
+      const creditsResponse = await axios.post(`${BASE_URL}/update-credits`, {
+        username: credituserdata,
+        actionType: 'comment',
+      });
+
       if (creditsResponse.data.success) {
         setNewComment('');
         setActivePostId(null);
         setCommentModalVisible(false);
         fetchPosts();
       } else {
-        console.error('Failed to update credits:', creditsResponse.data.message);
+        console.error(
+          'Failed to update credits:',
+          creditsResponse.data.message,
+        );
       }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
-  
+
   const closeCommentBox = () => {
     setActivePostId(null);
     setCommentModalVisible(false);
@@ -362,7 +384,34 @@ const Threads = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton icon="bell" onPress={handleLogout} />
+        <View style={{flexDirection: 'row'}}>
+          <IconButton
+            icon="bell"
+            onPress={() => {
+              console.log(notificationCount);
+              handleLogout();
+            }}
+            style={{marginRight: 8}}
+          />
+          {notificationCount > 0 && (
+            <Text
+              style={{
+                backgroundColor: '#3B3B3B',
+                borderRadius: 10,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                fontSize: 12,
+                color: 'white',
+                fontWeight: 'bold',
+                position: 'absolute',
+                top: 9,
+                right: 11,
+              }}>
+              {notificationCount}
+            </Text>
+          )}
+        </View>
+
         <IconButton
           icon="chat"
           // onPress={() => Navigation.navigate('ChatGpt')}
