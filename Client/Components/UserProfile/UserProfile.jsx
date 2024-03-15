@@ -1,5 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import base64 from 'base-64';
+import React, {useEffect, useState} from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -11,23 +13,21 @@ import {
 import Config from 'react-native-config';
 import ProjectSlider from './ProjectSlider';
 import SkillSlider from './SkillSlider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import base64 from 'base-64';
 
-const UserProfile = ({ route, navigation }) => {
+const UserProfile = ({route, navigation}) => {
   const BASE_URL = Config.BASE_URL;
   const username = route.params.userName;
-  console.log("user getting from chat", route.params.userName);
-  console.log("fetched user ", username);
+  console.log('user getting from chat', route.params.userName);
+  console.log('fetched user ', username);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('skills');
   const [tweets, setTweets] = useState([]);
   const [Myusername, MysetUsername] = useState(null);
-
+  const [following, setFollowing] = useState(false);
   useEffect(() => {
-    const Myusername = async () => {
+    const checkFollowingStatus = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (!token) {
@@ -36,22 +36,26 @@ const UserProfile = ({ route, navigation }) => {
         const [, payload] = token.split('.');
         const decodedPayload = base64.decode(payload);
         const payloadObject = JSON.parse(decodedPayload);
-        MysetUsername(payloadObject.username.toString());
+        const currentUser = payloadObject.username.toString();
+        // Check if the current user is following the displayed user
+        const response = await axios.get(
+          `${BASE_URL}/api/${currentUser}/following`,
+        );
+        const followingUsers = response.data;
+        setFollowing(followingUsers.includes(username));
       } catch (error) {
-        console.error('Error decoding token:', error);
+        console.error('Error checking following status:', error);
       }
     };
 
-    Myusername();
-
-    console.log("USER Logged in ", Myusername);
-    console.log("User To chat ", username);
-  }, [username]);
+    checkFollowingStatus();
+  }, [BASE_URL, username]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/api/searchitem?username=${username}`,
+        const response = await axios.get(
+          `${BASE_URL}/api/searchitem?username=${username}`,
         );
         const data = response.data;
         setUserData(data);
@@ -85,23 +89,62 @@ const UserProfile = ({ route, navigation }) => {
       const response = await axios.get(`${BASE_URL}/chatroomId`, {
         params: {
           participant1: username, // First participant
-          participant2: Myusername // Second participant
-        }
+          participant2: Myusername, // Second participant
+        },
       });
 
-      const { chatroomId } = response.data;
+      const {chatroomId} = response.data;
       console.log(chatroomId);
       // Assuming `Myusername` is the currently logged-in user's username
-      navigation.navigate('ChatPage', { userName: username, myUserName: Myusername, chatroomId: chatroomId });
+      navigation.navigate('ChatPage', {
+        userName: username,
+        myUserName: Myusername,
+        chatroomId: chatroomId,
+      });
     } catch (error) {
       console.error('Error fetching chatroomId:', error);
       // Handle error appropriately
     }
   };
 
+  const handleFollowButtonPress = async () => {
+    try {
+      if (following) {
+        // Unfollow the user
+        await axios.delete(`${BASE_URL}/api/${username}/followers`, {
+          data: {followername: Myusername},
+        });
+        setFollowing(false);
+      } else {
+        // Follow the user
+        await axios.post(`${BASE_URL}/api/${username}/followers`, {
+          followername: Myusername,
+        });
+        setFollowing(true);
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing user:', error);
+    }
+  };
 
-  const handleFollowButtonPress = () => {
-    console.log('Follow button pressed');
+  const renderFollowButton = () => {
+    if (following) {
+      return (
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleFollowButtonPress}>
+          <Text style={styles.actionButtonText}>UNFOLLOW</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleFollowButtonPress}>
+          <Text style={styles.actionButtonText}>FOLLOW</Text>
+        </TouchableOpacity>
+      );
+    }
   };
 
   const windowWidth = Dimensions.get('window').width;
@@ -135,6 +178,9 @@ const UserProfile = ({ route, navigation }) => {
           </View>
 
           <View style={styles.actions}>
+            {/* Render follow/unfollow button */}
+            {renderFollowButton()}
+            {/* Other actions */}
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleAskButtonPress}>
@@ -142,7 +188,9 @@ const UserProfile = ({ route, navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={handleFollowButtonPress}>
+              onPress={() =>
+                handleFollowButtonPress(userData.name, Myusername)
+              }>
               <Text style={styles.actionButtonText}>FOLLOW</Text>
             </TouchableOpacity>
           </View>
@@ -196,7 +244,7 @@ const UserProfile = ({ route, navigation }) => {
 
           <View style={styles.tweetsContainer}>
             <Text style={styles.tweetsTitle}>All Tweets</Text>
-            <ScrollView style={{ maxHeight: 300 }}>
+            <ScrollView style={{maxHeight: 300}}>
               {tweets.map((tweet, index) => (
                 <View key={tweet._id} style={styles.tweetContainer}>
                   <Text style={styles.tweetContent}>{tweet.content}</Text>
