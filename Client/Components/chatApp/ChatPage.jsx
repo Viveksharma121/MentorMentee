@@ -26,10 +26,16 @@ const ChatPage = ({ route }) => {
       await fetchMessages();
       await checkRatingStatus();
       await checkAndSetInitialSender(messages);
-      console.log("use effect me ", userName, isInitialSender);
-
+      const storedRatingDone = await AsyncStorage.getItem(`${chatroomId}_ratingDone`);
+      if (storedRatingDone !== null) {
+        setRatingDone(storedRatingDone === 'true');
+      }
     })();
   }, [chatroomId]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(`${chatroomId}_ratingDone`, ratingDone.toString());
+  }, [ratingDone]);
 
   const fetchMessages = async () => {
     try {
@@ -46,19 +52,15 @@ const ChatPage = ({ route }) => {
   };
 
   const checkAndSetInitialSender = async (newMessages) => {
-    console.log(`checkinital function me ${userName} ka ${rating}`);
-    console.log(`checkintial function me ${userName} ka ${isInitialSender}`);
     const storedSender = await AsyncStorage.getItem(`${chatroomId}_initialSender`);
     if (!storedSender && newMessages.length > 0) {
       const initialSender = newMessages[0].sender;
       await AsyncStorage.setItem(`${chatroomId}_initialSender`, initialSender);
       setIsInitialSender(initialSender === myUserName);
     } else {
-
       setIsInitialSender(storedSender === myUserName);
     }
   };
-
 
   const checkRatingStatus = async () => {
     try {
@@ -80,9 +82,8 @@ const ChatPage = ({ route }) => {
         setMessage(''); // Clear the input after sending
         fetchMessages();
         setShowEndButton(response.data.sender === myUserName); // Toggle the End button visibility based on sender
-
-        // Send notification
         await sendNotification(myUserName, userName, 'sent you a message');
+        setRatingDone(true); // Set ratingDone to true when a message is sent
       } else {
         console.error('Error while sending message:', response.data.error);
       }
@@ -102,10 +103,6 @@ const ChatPage = ({ route }) => {
 
   const scrollViewRef = useRef();
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
     scrollViewRef.current.scrollToEnd({ animated: true });
   };
@@ -120,9 +117,7 @@ const ChatPage = ({ route }) => {
       `${BASE_URL}/update-credits`,
       { username: userName, actionType: 'Rating', rating: rating }
     );
-
-    console.log("resource ka credits ", creditsResponse.data)
-    setRatingDone(true);
+    setRatingDone(false);
     setShowEndButton(false);
     closeModal();
   };
@@ -146,7 +141,7 @@ const ChatPage = ({ route }) => {
         <TouchableOpacity onPress={navigateToUserProfile}>
           <Text style={styles.headerText}>{userName}</Text>
         </TouchableOpacity>
-        {!ratingDone && isInitialSender && (
+        {ratingDone && (
           <TouchableOpacity onPress={openModal}>
             <Text style={styles.endButton}>End</Text>
           </TouchableOpacity>

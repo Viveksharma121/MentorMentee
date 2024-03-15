@@ -42,16 +42,28 @@ const EditForm = ({ route, navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
-        backgroundColor: '#ffffff',
+        padding: 20,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     input: {
-        borderWidth: 1,
-        borderColor: 'gray',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 16,
+        borderWidth: 2,
+        borderColor: '#1da1f2',
+        borderRadius: 10,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        marginBottom: 20,
+        fontSize: 18,
+        color: '#333',
+        backgroundColor: '#ffffff',
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 5,
     },
 });
+
 
 export default EditForm;

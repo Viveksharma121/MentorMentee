@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Config from 'react-native-config';
 import { Avatar, Card, IconButton, Subheading, Title } from 'react-native-paper';
+
 const ProfilePage = () => {
   const navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -66,7 +67,7 @@ const ProfilePage = () => {
         setSkills(skillsResponse.data.skills || []);
         setProjects(skillsResponse.data.projects || []);
       } catch (error) {
-        // console.error('Error fetching skills or projects:', error);
+        console.error('Error fetching skills or projects:', error);
         setSkills([]);
         setProjects([]);
       }
@@ -78,12 +79,7 @@ const ProfilePage = () => {
 
   const handleLogout = async () => {
     try {
-      console.log(AsyncStorage);
       await AsyncStorage.removeItem('token');
-      console.log('====================================');
-      console.log('after logout');
-      console.log('====================================');
-      console.log(AsyncStorage);
       navigation.navigate('Login');
     } catch (error) {
       console.error('Error clearing token:', error);
@@ -169,17 +165,22 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    right: 0,
-    top: 0,
+    right: 16,
+    top: 16,
+    zIndex: 1,
   },
 
   avatar: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#1da1f2',
     marginBottom: 10,
+    elevation: 2,
+    borderRadius: 50, // Making the avatar circular
   },
   username: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10, // Adding some space below the username
   },
   email: {
     fontSize: 16,
@@ -198,10 +199,13 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 10,
-    elevation: 3,
+    elevation: 2,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
   },
   cardText: {
     fontSize: 16,
+    color: '#333',
   },
   linkText: {
     fontSize: 14,
@@ -209,16 +213,21 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   addButton: {
-    backgroundColor: '#007AFF',
-    padding: 12,
+    backgroundColor: '#1da1f2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 5,
     marginTop: 10,
+    elevation: 2,
   },
   addButtonText: {
     color: 'white',
     textAlign: 'center',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
+
+
 
 export default ProfilePage;
