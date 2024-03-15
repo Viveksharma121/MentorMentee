@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -13,7 +13,7 @@ const HomePage = () => {
   const BASE_URL = Config.BASE_URL;
   const [chatroomsData, setChatroomsData] = useState([]);
   const [chatrooms, setChatrooms] = useState([]);
-
+  const [participants, setparticipants] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -36,8 +36,25 @@ const HomePage = () => {
   useEffect(() => {
     if (username) {
       fetchChatrooms();
+      fetchAllChat();
     }
   }, [username]);
+
+  const fetchAllChat = async () => {
+    try {
+      console.log('sending username', username);
+      const response = await axios.get(
+        `${BASE_URL}/api/chat/allchatrooms?username=${username}`,
+      );
+      console.log('all chatrooms');
+      const participants = response.data.map(chatroom => chatroom.participants);
+      console.log(participants);
+      setparticipants(participants);
+      console.log(chatrooms);
+    } catch (error) {
+      console.error('Error fetching chatrooms:', error);
+    }
+  };
 
   const fetchChatrooms = async () => {
     try {
@@ -46,26 +63,38 @@ const HomePage = () => {
       });
 
       setChatrooms(response.data);
+      console.log(response.data);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
   };
 
-  const renderChatroomItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.chatroomItem}
-      onPress={() =>
-        navigation.navigate('Chat', {
-          chatroomId: item.chatroomId,
-          userName: item.otherUserName,
-          myUserName: username,
-        })
-      }>
-      <View style={styles.chatroomContent}>
-        <Text style={styles.chatroomText}>{item.otherUserName}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderChatroomItem = ({item}) => {
+    // Check if item.otherUserName matches the first participant in participants array
+    const isMentor = participants.some(
+      participant => participant[0] === item.otherUserName,
+    );
+
+    return (
+      <TouchableOpacity
+        style={styles.chatroomItem}
+        onPress={() =>
+          navigation.navigate('Chat', {
+            chatroomId: item.chatroomId,
+            userName: item.otherUserName,
+            myUserName: username,
+          })
+        }>
+        <View style={styles.chatroomContent}>
+          <Text style={styles.chatroomText}>
+            {isMentor
+              ? `${item.otherUserName} (Mentor)`
+              : `${item.otherUserName} (Mentee)`}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -73,11 +102,11 @@ const HomePage = () => {
       <FlatList
         data={chatrooms}
         renderItem={renderChatroomItem}
-        keyExtractor={(item) => item.chatroomId}
+        keyExtractor={item => item.chatroomId}
       />
       <TouchableOpacity
         style={styles.searchButton}
-        onPress={() => navigation.navigate('Searchh', { myUserName: username })}>
+        onPress={() => navigation.navigate('Searchh', {myUserName: username})}>
         <Icon name="search" size={24} color="white" />
       </TouchableOpacity>
     </View>

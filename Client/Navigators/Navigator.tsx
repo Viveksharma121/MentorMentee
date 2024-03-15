@@ -179,6 +179,11 @@ const AppNavigator = () => {
         component={Notification}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="SkillsForm"
+        component={SkillsForm}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -261,6 +266,11 @@ const AppNavigator2 = () => {
         component={Notification}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="SkillsForm"
+        component={SkillsForm}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -303,12 +313,12 @@ const MainTabNavigator = () => {
         },
       })}>
       <Tab.Screen name="Threads" component={Threads} />
-      <Tab.Screen name="Profile" component={Profile} />
-      <Tab.Screen name="SkillsForm" component={SkillsForm} />
       <Tab.Screen name="Search" component={ProjectForm} />
+      <Tab.Screen name="ChatGpt" component={ChatGpt} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
-      <Tab.Screen name="BuyItemsPage" component={BuyItemsPage} />
-      <Tab.Screen name="Notification" component={Notification} />
+      <Tab.Screen name="Profile" component={Profile} />
+      
+      
       {/* <Tab.Screen name="ChatGpt" component={ChatGpt} /> */}
     </Tab.Navigator>
   );

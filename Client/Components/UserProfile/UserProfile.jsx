@@ -24,7 +24,7 @@ const UserProfile = ({route, navigation}) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('skills');
   const [tweets, setTweets] = useState([]);
-  const [Myusername, MysetUsername] = useState(null);
+  const [Myusername, setUsername] = useState(null);
   const [following, setFollowing] = useState(false);
   useEffect(() => {
     const checkFollowingStatus = async () => {
@@ -37,11 +37,13 @@ const UserProfile = ({route, navigation}) => {
         const decodedPayload = base64.decode(payload);
         const payloadObject = JSON.parse(decodedPayload);
         const currentUser = payloadObject.username.toString();
+        setUsername(currentUser);
         // Check if the current user is following the displayed user
         const response = await axios.get(
           `${BASE_URL}/api/${currentUser}/following`,
         );
         const followingUsers = response.data;
+        console.log(followingUsers);
         setFollowing(followingUsers.includes(username));
       } catch (error) {
         console.error('Error checking following status:', error);
@@ -132,7 +134,7 @@ const UserProfile = ({route, navigation}) => {
       return (
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={handleFollowButtonPress}>
+          onPress={() => handleFollowButtonPress(userData.name, Myusername)}>
           <Text style={styles.actionButtonText}>UNFOLLOW</Text>
         </TouchableOpacity>
       );
@@ -140,7 +142,7 @@ const UserProfile = ({route, navigation}) => {
       return (
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={handleFollowButtonPress}>
+          onPress={() => handleFollowButtonPress(userData.name, Myusername)}>
           <Text style={styles.actionButtonText}>FOLLOW</Text>
         </TouchableOpacity>
       );
@@ -185,13 +187,6 @@ const UserProfile = ({route, navigation}) => {
               style={styles.actionButton}
               onPress={handleAskButtonPress}>
               <Text style={styles.actionButtonText}>ASK</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() =>
-                handleFollowButtonPress(userData.name, Myusername)
-              }>
-              <Text style={styles.actionButtonText}>FOLLOW</Text>
             </TouchableOpacity>
           </View>
 

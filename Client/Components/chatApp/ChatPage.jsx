@@ -1,38 +1,74 @@
-import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Modal } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Config from 'react-native-config';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-const ChatPage = ({ route }) => {
+const ChatPage = ({route}) => {
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
-  const { chatroomId, userName, myUserName } = route.params;
+  const {chatroomId, userName, myUserName} = route.params;
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [rating, setRating] = useState(0);
   const [selectedStar, setSelectedStar] = useState(0);
-  const [ratingDone, setRatingDone] = useState(false);
-  const [showEndButton, setShowEndButton] = useState(false);
-  const [isTyping, setIsTyping] = useState(false); // State to track whether user is typing
-
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMentoringSessionActive, setIsMentoringSessionActive] =
+    useState(false);
+  const [receiver, setReceiver] = useState('');
   useEffect(() => {
     (async () => {
       await fetchMessages();
-      await checkRatingStatus();
+      await fetchParticipant(chatroomId);
+      await fetchMentoringSessionState();
     })();
   }, [chatroomId]);
+  const fetchMentoringSessionState = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/chat/chatroom/${chatroomId}/session-state`,
+      );
+      setIsMentoringSessionActive(response.data.isMentoringSessionActive);
+    } catch (error) {
+      console.error('Error fetching mentoring session state:', error);
+    }
+  };
+
+  const updateMentoringSessionState = async isActive => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/chat/chatroom/${chatroomId}/session-state`,
+        {
+          isMentoringSessionActive: isActive,
+        },
+      );
+      setIsMentoringSessionActive(response.data.isMentoringSessionActive);
+    } catch (error) {
+      console.error('Error updating mentoring session state:', error);
+    }
+  };
+
+  const handleNewMessage = () => {
+    updateMentoringSessionState(true); // When a new message is sent, set the mentoring session as active
+  };
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.post(`${BASE_URL}/messages`, { chatroomId });
+      const response = await axios.post(`${BASE_URL}/messages`, {chatroomId});
       if (response.status === 200) {
         setMessages(response.data);
-        await checkAndSetInitialSender(response.data);
       } else {
         console.error('Error:', response.statusText);
       }
@@ -41,29 +77,15 @@ const ChatPage = ({ route }) => {
     }
   };
 
-  const checkAndSetInitialSender = async (newMessages) => {
-    const storedSender = await AsyncStorage.getItem(`${chatroomId}_initialSender`);
-    if (!storedSender && newMessages.length > 0) {
-      const initialSender = newMessages[0].sender;
-      await AsyncStorage.setItem(`${chatroomId}_initialSender`, initialSender);
-      setShowEndButton(initialSender === myUserName);
-    } else if (storedSender === myUserName) {
-      setShowEndButton(true);
-    } else if (myUserName === userName) {
-      // Check if the initial sender is the other user
-      const initialSender = newMessages[0].sender;
-      if (initialSender === userName) {
-        setShowEndButton(true);
-      }
-    }
-  };
-
-  const checkRatingStatus = async () => {
+  const fetchParticipant = async chatroomId => {
     try {
-      const hasRated = await AsyncStorage.getItem(`${chatroomId}_hasRated`);
-      setRatingDone(hasRated === 'true');
+      const response = await axios.get(
+        `${BASE_URL}/api/chat/chatroom/${chatroomId}/participants/0`,
+      );
+      const participant = response.data.participant;
+      setReceiver(participant);
     } catch (error) {
-      console.error('Error checking rating status:', error);
+      console.error('Error fetching participant:', error);
     }
   };
 
@@ -77,10 +99,9 @@ const ChatPage = ({ route }) => {
       if (response.status === 200) {
         setMessage(''); // Clear the input after sending
         fetchMessages();
-        setShowEndButton(response.data.sender === myUserName); // Toggle the End button visibility based on sender
 
-        // Send notification
         await sendNotification(myUserName, userName, 'sent you a message');
+        handleNewMessage(); // Call handleNewMessage when a new message is sent
       } else {
         console.error('Error while sending message:', response.data.error);
       }
@@ -92,7 +113,11 @@ const ChatPage = ({ route }) => {
   const sendNotification = async (sender, receiver, message) => {
     try {
       // Assuming the server route for sending notifications is '/send-notification'
-      await axios.post(`${BASE_URL}/send-notification`, { sender, receiver, message });
+      await axios.post(`${BASE_URL}/send-notification`, {
+        sender,
+        receiver,
+        message,
+      });
     } catch (error) {
       console.error('Error sending notification:', error);
     }
@@ -100,40 +125,36 @@ const ChatPage = ({ route }) => {
 
   const scrollViewRef = useRef();
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
-    scrollViewRef.current.scrollToEnd({ animated: true });
+    scrollViewRef.current.scrollToEnd({animated: true});
   };
 
   const navigateToUserProfile = () => {
-    navigation.navigate('UserProfile', { userName });
+    navigation.navigate('UserProfile', {userName});
   };
 
   const handleDonePress = async () => {
     await AsyncStorage.setItem(`${chatroomId}_hasRated`, 'true');
-    const creditsResponse = await axios.post(
-      `${BASE_URL}/update-credits`,
-      { username: userName, actionType: 'Rating', rating: rating }
-    );
-
-    console.log("resource ka credits ", creditsResponse.data)
-    setRatingDone(true);
-    setShowEndButton(false);
+    const creditsResponse = await axios.post(`${BASE_URL}/update-credits`, {
+      username: userName,
+      actionType: 'Rating',
+      rating: rating,
+    });
+    console.log(isMentoringSessionActive);
+    updateMentoringSessionState(false);
+    console.log(isMentoringSessionActive);
     closeModal();
   };
 
   const openModal = () => setShowModal(true);
   const closeModal = () => setShowModal(false);
 
-  const handleStarPress = (selectedRating) => {
+  const handleStarPress = selectedRating => {
     setRating(selectedRating);
     setSelectedStar(selectedRating);
   };
 
-  const handleTyping = (text) => {
+  const handleTyping = text => {
     setMessage(text);
     setIsTyping(!!text.trim()); // Update typing state based on whether input has content
   };
@@ -144,11 +165,13 @@ const ChatPage = ({ route }) => {
         <TouchableOpacity onPress={navigateToUserProfile}>
           <Text style={styles.headerText}>{userName}</Text>
         </TouchableOpacity>
-        {showEndButton && !ratingDone && (
-          <TouchableOpacity onPress={openModal}>
-            <Text style={styles.endButton}>End</Text>
-          </TouchableOpacity>
-        )}
+
+        <TouchableOpacity onPress={openModal}>
+          <Text style={styles.endButton}>
+            {receiver !== myUserName && isMentoringSessionActive ? 'End' : ''}{' '}
+            {/* Change button text based on session state */}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -160,7 +183,9 @@ const ChatPage = ({ route }) => {
             key={index}
             style={[
               styles.messageBubble,
-              msg.sender === myUserName ? styles.sentMessage : styles.receivedMessage,
+              msg.sender === myUserName
+                ? styles.sentMessage
+                : styles.receivedMessage,
             ]}>
             <Text style={styles.messageText}>{msg.text}</Text>
           </View>
@@ -188,8 +213,10 @@ const ChatPage = ({ route }) => {
           <View style={styles.modalView}>
             <Text style={styles.modalText}>Rate the user</Text>
             <View style={styles.starsContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => handleStarPress(star)}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => handleStarPress(star)}>
                   <FontAwesome
                     name={star <= selectedStar ? 'star' : 'star-o'}
                     size={40}
@@ -198,7 +225,9 @@ const ChatPage = ({ route }) => {
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity onPress={handleDonePress} style={styles.doneButton}>
+            <TouchableOpacity
+              onPress={handleDonePress}
+              style={styles.doneButton}>
               <Text style={styles.doneText}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -246,7 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
@@ -304,7 +333,7 @@ const styles = StyleSheet.create({
     padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,

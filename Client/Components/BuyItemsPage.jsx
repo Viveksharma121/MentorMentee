@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
-import {Pressable} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
 import Swiper from 'react-native-swiper';
 
 import {
@@ -33,35 +33,35 @@ const BuyItemsPage = () => {
       name: 'Shirt 1',
       description: 'A stylish shirt for your wardrobe',
       price: 50,
-      image: 'https://images.unsplash.com/photo-1501544610428-bbc1a5a24341',
+      image: 'https://media.istockphoto.com/id/1354020635/photo/white-t-shirt-mockup-front-used-as-design-template-tee-shirt-blank-isolated-on-white.webp?b=1&s=170667a&w=0&k=20&c=X5WLEp3EiqJ7eQqGQPW6Vx8l7joo56cTsCmSOIaAfPI=',
     },
     {
       id: 2,
       name: 'Shirt 2',
       description: 'Another stylish shirt for your wardrobe',
       price: 55,
-      image: 'https://images.unsplash.com/photo-1519281961567-1e0e1c8e6713',
+      image: 'https://media.istockphoto.com/id/1125110782/photo/young-man-isolated-on-gray-textured-wall-smiling-while-pointing-with-index-finger-to-black-t.webp?b=1&s=170667a&w=0&k=20&c=iqeKCeyRiuqiRW2f7QE5QOwL82TWkWBGwYB035OAWIo=',
     },
     {
       id: 3,
       name: 'Shirt 3',
       description: 'A casual shirt for everyday wear',
       price: 45,
-      image: 'https://images.unsplash.com/photo-1510511459019-5dda7724fd0b',
+      image: 'https://media.istockphoto.com/id/514685863/photo/going-for-the-laid-back-look.jpg?s=2048x2048&w=is&k=20&c=yfRxtnGMERp7RJmDUb2X-2gVgPELQkOQuvjzZHHa0I4=',
     },
     {
       id: 4,
       name: 'T-shirt 1',
       description: 'A comfortable t-shirt for casual outings',
       price: 35,
-      image: 'https://images.unsplash.com/photo-1606780700407-0325bdf31964',
+      image: 'https://images.unsplash.com/photo-1656339504243-2df4c5ebf1c0?q=80&w=1965&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     },
     {
       id: 5,
       name: 'T-shirt 2',
       description: 'Another stylish t-shirt for casual wear',
       price: 40,
-      image: 'https://images.unsplash.com/photo-1561350901-eb4a01f6477e',
+      image: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Ft-shirt&psig=AOvVaw0pREahw2sRjOhtpHeOlAsi&ust=1710584213358000&source=images&cd=vfe&opi=89978449&ved=0CBMQjRxqFwoTCKCSs_OE9oQDFQAAAAAdAAAAABAE',
     },
     {
       id: 6,
@@ -228,7 +228,7 @@ const BuyItemsPage = () => {
             key={item.id}
             onPress={() => handleSelectItem(item)}
             style={styles.item}>
-            <Image source={{uri: item.image}} style={styles.itemImage} />
+            <Image source={{ uri: item.image }} style={styles.itemImage} />
             <Text style={styles.itemName}>{item.name}</Text>
             <Text style={styles.itemDescription}>{item.description}</Text>
             <Text style={styles.itemPrice}>Price: {item.price} points</Text>
@@ -242,7 +242,7 @@ const BuyItemsPage = () => {
             {selectedItem.map(item => (
               <View key={item.id} style={styles.slide}>
                 <Image
-                  source={{uri: item.image}}
+                  source={{ uri: item.image }}
                   style={styles.selectedItemImage}
                 />
                 <Text style={styles.selectedItemName}>{item.name}</Text>
@@ -262,7 +262,7 @@ const BuyItemsPage = () => {
             </Text>
           </View>
           <Pressable
-            style={({pressed}) => [
+            style={({ pressed }) => [
               {
                 backgroundColor: pressed
                   ? 'rgb(210, 230, 255)'
@@ -284,7 +284,7 @@ const BuyItemsPage = () => {
         <Text style={styles.headerText}>Redemption History:</Text>
         {redemptionHistory.map((item, index) => (
           <View key={index} style={styles.historyItem}>
-            <Image source={{uri: item.image}} style={styles.historyItemImage} />
+            <Image source={{ uri: item.image }} style={styles.historyItemImage} />
             <Text>{item.name}</Text>
           </View>
         ))}
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: 'black',
+    backgroundColor: 'white',
   },
   header: {
     marginBottom: 20,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#f0f0f0',
     borderRadius: 5,
-    backgroundColor: 'black',
+    backgroundColor: 'white',
   },
   itemImage: {
     width: '100%',

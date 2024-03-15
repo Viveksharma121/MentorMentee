@@ -55,6 +55,9 @@ app.use("/api", require("./routes/student"));
 const resource_route = require("./routes/Resource");
 app.use("/api/resource", resource_route);
 
+const chat_route = require("./routes/Chatroom");
+app.use("/api/chat", chat_route);
+
 db()
   .then(() => {
     app.listen(PORT, () => {

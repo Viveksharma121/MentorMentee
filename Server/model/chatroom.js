@@ -17,6 +17,10 @@ const chatroomSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  isMentoringSessionActive: {
+    type: Boolean,
+    default: false, // Initially set to false
+  },
 });
 
 // Create the Chatroom model

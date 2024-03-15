@@ -111,7 +111,7 @@ exports.addFollowers = async (req, res) => {
   try {
     const { username } = req.params;
     const { followername } = req.body;
-
+    console.log(username + " fllowe" + followername);
     // Find the user to follow
     const user = await StudentModel.findOne({ name: username });
     // Find the follower
@@ -126,6 +126,11 @@ exports.addFollowers = async (req, res) => {
     if (!user.followers.includes(follower.toString())) {
       user.followers.push(follower.name);
       follower.following.push(user.name);
+      await user.save();
+      await follower.save();
+    } else {
+      user.followers = user.followers.filter((f) => f !== follower.name);
+      follower.following = follower.following.filter((f) => f !== user.name);
       await user.save();
       await follower.save();
     }
