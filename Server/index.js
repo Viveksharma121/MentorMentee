@@ -55,9 +55,6 @@ app.use("/api", require("./routes/student"));
 const resource_route = require("./routes/Resource");
 app.use("/api/resource", resource_route);
 
-const chat_route = require("./routes/Chatroom");
-app.use("/api/chat", chat_route);
-
 db()
   .then(() => {
     app.listen(PORT, () => {
@@ -543,5 +540,31 @@ app.delete("/notifications/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting notification:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get('/rank', async (req, res) => {
+  try {
+    const users = await User.find().sort({ credits: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+app.get('/rating', async (req, res) => {
+  try {
+    const resources = await Resource.find().sort({ rating: -1 });
+    // Modify the response to include createdBy as username and rating
+    console.log(resources);
+    const modifiedResources = resources.map(resource => ({
+      username: resource.createdBy, // Assuming createdBy is the username
+      rating: resource.rating,
+    }));
+
+    res.json(modifiedResources);
+  } catch (error) {
+    console.error('Error fetching resources by rating:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });

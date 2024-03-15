@@ -98,6 +98,7 @@ import HomePage from '../Components/chatApp/Homepage';
 import SearchPage from '../Components/chatApp/SearchPage';
 import BuyItemsPage from '../Components/BuyItemsPage';
 import Notification from '../Components/Notification';
+import Rank from '../Components/Rank'
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -182,6 +183,11 @@ const AppNavigator = () => {
       <Stack.Screen
         name="SkillsForm"
         component={SkillsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Rank"
+        component={Rank}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -269,6 +275,11 @@ const AppNavigator2 = () => {
       <Stack.Screen
         name="SkillsForm"
         component={SkillsForm}
+        options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="Rank"
+        component={Rank}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

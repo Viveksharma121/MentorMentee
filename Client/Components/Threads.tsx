@@ -441,8 +441,13 @@ const Threads = () => {
           <IconButton
             icon="chat"
             onPress={() => Navigation.navigate('Home')}
-            style={{ marginHorizontal: 45 }}
+            style={{ marginHorizontal: 20}}
           />
+          <IconButton
+    icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
+    onPress={() => Navigation.navigate('Rank')}
+    style={{ marginHorizontal: 16 }}
+  />
           <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} style={{ marginHorizontal: 12 }} />
         </View>
         <IconButton
