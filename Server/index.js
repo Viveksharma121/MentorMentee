@@ -403,7 +403,7 @@ app.post("/update-credits", async (req, res) => {
         creditsToAdd = 10;
         break;
       case "resourceAdd":
-        creditsToAdd = 50;
+        creditsToAdd = -250;
         break;
       case "Rating":
         // Adjust the conversion from rating to credits as per your requirement
@@ -414,7 +414,7 @@ app.post("/update-credits", async (req, res) => {
         break;
     }
 
-    if (creditsToAdd > 0) {
+    if (creditsToAdd > 0 || creditsToAdd < 0) {
       const user = await User.findOneAndUpdate(
         { username },
         { $inc: { credits: creditsToAdd } },
