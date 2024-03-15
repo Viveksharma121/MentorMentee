@@ -106,10 +106,10 @@ const ProfilePage = () => {
             style={styles.avatar}
           />
           <IconButton
-            icon="logout"
+            icon="cart"
             color="#000"
             size={24}
-            onPress={handleLogout}
+            onPress={() => navigation.navigate('BuyItemsPage')}
             style={styles.logoutButton}
           />
           <Title style={styles.username}>{userDetails.username}</Title>

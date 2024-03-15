@@ -19,11 +19,15 @@ const ChatPage = ({ route }) => {
   const [ratingDone, setRatingDone] = useState(false);
   const [showEndButton, setShowEndButton] = useState(false);
   const [isTyping, setIsTyping] = useState(false); // State to track whether user is typing
+  const [isInitialSender, setIsInitialSender] = useState(false);
 
   useEffect(() => {
     (async () => {
       await fetchMessages();
       await checkRatingStatus();
+      await checkAndSetInitialSender(messages);
+      console.log("use effect me ", userName, isInitialSender);
+
     })();
   }, [chatroomId]);
 
@@ -42,21 +46,19 @@ const ChatPage = ({ route }) => {
   };
 
   const checkAndSetInitialSender = async (newMessages) => {
+    console.log(`checkinital function me ${userName} ka ${rating}`);
+    console.log(`checkintial function me ${userName} ka ${isInitialSender}`);
     const storedSender = await AsyncStorage.getItem(`${chatroomId}_initialSender`);
     if (!storedSender && newMessages.length > 0) {
       const initialSender = newMessages[0].sender;
       await AsyncStorage.setItem(`${chatroomId}_initialSender`, initialSender);
-      setShowEndButton(initialSender === myUserName);
-    } else if (storedSender === myUserName) {
-      setShowEndButton(true);
-    } else if (myUserName === userName) {
-      // Check if the initial sender is the other user
-      const initialSender = newMessages[0].sender;
-      if (initialSender === userName) {
-        setShowEndButton(true);
-      }
+      setIsInitialSender(initialSender === myUserName);
+    } else {
+
+      setIsInitialSender(storedSender === myUserName);
     }
   };
+
 
   const checkRatingStatus = async () => {
     try {
@@ -144,7 +146,7 @@ const ChatPage = ({ route }) => {
         <TouchableOpacity onPress={navigateToUserProfile}>
           <Text style={styles.headerText}>{userName}</Text>
         </TouchableOpacity>
-        {showEndButton && !ratingDone && (
+        {!ratingDone && isInitialSender && (
           <TouchableOpacity onPress={openModal}>
             <Text style={styles.endButton}>End</Text>
           </TouchableOpacity>

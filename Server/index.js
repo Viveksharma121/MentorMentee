@@ -25,7 +25,7 @@ const sessionConfig = {
 const passport = require("passport");
 const LocalStragery = require("passport-local");
 const User = require("./model/User");
-const Notification=require("./model/Notification");
+const Notification = require("./model/Notification");
 //to use sessions
 app.use(session(sessionConfig));
 //to use passport
@@ -354,20 +354,20 @@ app.post("/message", async (req, res) => {
   }
 });
 
-app.get('/credits/:postId',async(req,res)=>{
+app.get("/credits/:postId", async (req, res) => {
   try {
-    const postId=req.params.postId;
+    const postId = req.params.postId;
     console.log(postId);
-    const credituser= await Tweet.find({id:postId});
-    console.log("credit of the user in backend ",credituser);
+    const credituser = await Tweet.find({ id: postId });
+    console.log("credit of the user in backend ", credituser);
     res.status(200).json(credituser);
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ error: "Internal server error" });
   }
-})
+});
 
-app.get('/credits/:resId', async (req, res) => {
+app.get("/credits/:resId", async (req, res) => {
   try {
     const resId = req.params.resId;
     console.log("Received resId:", resId);
@@ -382,7 +382,7 @@ app.get('/credits/:resId', async (req, res) => {
   }
 });
 
-app.post('/update-credits', async (req, res) => {
+app.post("/update-credits", async (req, res) => {
   const { username, actionType, rating } = req.body;
   console.log(username, actionType, rating);
 
@@ -390,19 +390,19 @@ app.post('/update-credits', async (req, res) => {
     let creditsToAdd = 0;
 
     switch (actionType) {
-      case 'comment':
+      case "comment":
         creditsToAdd = 5;
         break;
-      case 'like':
+      case "like":
         creditsToAdd = 1;
         break;
-      case 'resourcelike':
+      case "resourcelike":
         creditsToAdd = 10;
         break;
-      case 'resourceAdd':
+      case "resourceAdd":
         creditsToAdd = 50;
         break;
-      case 'Rating':
+      case "Rating":
         // Adjust the conversion from rating to credits as per your requirement
         // This is just an example, adjust it based on your business logic
         creditsToAdd = rating * 20;
@@ -421,69 +421,71 @@ app.post('/update-credits', async (req, res) => {
       console.log(`${username} ke credit => ${user.credits}`);
       return res.json({ success: true, credits: user.credits });
     } else {
-      return res.json({ success: false, message: 'Invalid action type' });
+      return res.json({ success: false, message: "Invalid action type" });
     }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 });
 
-
-app.get('/chatroomId', async (req, res) => {
+app.get("/chatroomId", async (req, res) => {
   const { participant1, participant2 } = req.query;
 
   try {
     const chatroom = await Chatroom.findOne({
-      participants: { $all: [participant1, participant2] }
+      participants: { $all: [participant1, participant2] },
     });
 
     if (!chatroom) {
-      return res.status(404).json({ error: 'Chatroom not found' });
+      return res.status(404).json({ error: "Chatroom not found" });
     }
 
     res.json({ chatroomId: chatroom.chatroomId });
   } catch (error) {
-    console.error('Error fetching chatroomId:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching chatroomId:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.get('/:username/credits', async (req, res) => {
+app.get("/:username/credits", async (req, res) => {
   const { username } = req.params;
   try {
-      const user = await User.findOne({ username });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-      res.json({ credits: user.credits });
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ credits: user.credits });
   } catch (error) {
-      console.error('Error fetching user credits:', error);
-      res.status(500).json({ message: 'Internal server error' });
+    console.error("Error fetching user credits:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 // Route to deduct credits from user's account
-app.post('/deduct-credits', async (req, res) => {
+app.post("/deduct-credits", async (req, res) => {
   const { username, price } = req.body;
+  console.log(price);
   try {
-      const user = await User.findOne({ username });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-      if (user.credits < price) {
-          return res.status(400).json({ message: 'Insufficient credits' });
-      }
-      user.credits -= price;
-      await user.save();
-      res.json({ message: 'Credits deducted successfully' });
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.credits < price) {
+      return res.status(400).json({ message: "Insufficient credits" });
+    }
+    user.credits -= price;
+    await user.save();
+    res.json({ message: "Credits deducted successfully" });
   } catch (error) {
-      console.error('Error deducting credits:', error);
-      res.status(500).json({ message: 'Internal server error' });
+    console.error("Error deducting credits:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
-app.post('/send-notification', async (req, res) => {
+app.post("/send-notification", async (req, res) => {
   try {
     // Extract sender, receiver, and message from request body
     const { sender, receiver, message } = req.body;
@@ -492,32 +494,32 @@ app.post('/send-notification', async (req, res) => {
     const notification = new Notification({
       sender,
       receiver,
-      message
+      message,
     });
 
     // Save the notification to the database
     await notification.save();
-    console.log("notification saved ",notification);
+    console.log("notification saved ", notification);
     // Respond with a success message
-    res.status(200).json({ message: 'Notification sent successfully' });
+    res.status(200).json({ message: "Notification sent successfully" });
   } catch (error) {
     // If an error occurs, respond with an error message
-    console.error('Error sending notification:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error sending notification:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.get('/notifications/:username', async (req, res) => {
+app.get("/notifications/:username", async (req, res) => {
   const { username } = req.params;
-  console.log("backend notification USername ",username);
+  console.log("backend notification USername ", username);
   try {
     // Query the database to find notifications where the receiver is the provided username
     const notifications = await Notification.find({ receiver: username });
 
     res.status(200).json(notifications);
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
