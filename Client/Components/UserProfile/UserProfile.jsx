@@ -26,7 +26,36 @@ const UserProfile = ({ route, navigation }) => {
   const [tweets, setTweets] = useState([]);
   const [Myusername, setUsername] = useState(null);
   const [following, setFollowing] = useState(false);
+  const [postcount, setpostCount] = useState(0);
+  const [followerCount, setfollowerCount] = useState(0);
+  const [followingCount, setfollowingCount] = useState(0);
   useEffect(() => {
+    const getFollowingCount = async () => {
+      try {
+        console.log('my username', username);
+        const response = await axios.get(
+          `${BASE_URL}/api/${username}/following`,
+        );
+        setfollowingCount(response.data.length);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setError('Error fetching user data. Please try again.');
+      }
+    };
+    getFollowingCount();
+    const getFollowerCount = async () => {
+      try {
+        console.log('my username', username);
+        const response = await axios.get(
+          `${BASE_URL}/api/${username}/followers`,
+        );
+        setfollowerCount(response.data.length);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setError('Error fetching user data. Please try again.');
+      }
+    };
+    getFollowerCount();
     const checkFollowingStatus = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
@@ -38,12 +67,11 @@ const UserProfile = ({ route, navigation }) => {
         const payloadObject = JSON.parse(decodedPayload);
         const currentUser = payloadObject.username.toString();
         setUsername(currentUser);
-        // Check if the current user is following the displayed user
         const response = await axios.get(
           `${BASE_URL}/api/${currentUser}/following`,
         );
         const followingUsers = response.data;
-        console.log(followingUsers);
+        console.log(JSON.stringify(followingUsers) + ' this is line 35');
         setFollowing(followingUsers.includes(username));
       } catch (error) {
         console.error('Error checking following status:', error);
@@ -76,6 +104,7 @@ const UserProfile = ({ route, navigation }) => {
         );
         const tweetsData = response.data;
         setTweets(tweetsData);
+        setpostCount(tweetsData.length);
       } catch (error) {
         console.log(error);
       }
@@ -117,17 +146,22 @@ const UserProfile = ({ route, navigation }) => {
           data: { followername: Myusername },
         });
         setFollowing(false);
+        // Decrease the follower count since the user has unfollowed
+        setfollowerCount((prevCount) => prevCount - 1);
       } else {
         // Follow the user
         await axios.post(`${BASE_URL}/api/${username}/followers`, {
           followername: Myusername,
         });
         setFollowing(true);
+        // Increase the follower count since the user has followed
+        setfollowerCount((prevCount) => prevCount + 1);
       }
     } catch (error) {
       console.error('Error following/unfollowing user:', error);
     }
   };
+
 
   const renderFollowButton = () => {
     if (following) {
@@ -165,15 +199,15 @@ const UserProfile = ({ route, navigation }) => {
             </View>
             <View style={styles.stats}>
               <View style={styles.stat}>
-                <Text style={styles.statValue}>100</Text>
+                <Text style={styles.statValue}>{followerCount}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.statValue}>200</Text>
+                <Text style={styles.statValue}>{followingCount}</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.statValue}>300</Text>
+                <Text style={styles.statValue}>{postcount}</Text>
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
             </View>
@@ -273,6 +307,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   avatarContainer: {

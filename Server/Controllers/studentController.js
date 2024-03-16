@@ -111,7 +111,7 @@ exports.addFollowers = async (req, res) => {
   try {
     const { username } = req.params;
     const { followername } = req.body;
-    console.log(username + " fllowe" + followername);
+
     // Find the user to follow
     const user = await StudentModel.findOne({ name: username });
     // Find the follower
@@ -123,58 +123,31 @@ exports.addFollowers = async (req, res) => {
     }
 
     // Check if the follower is already following the user
-    if (!user.followers.includes(follower.toString())) {
+    console.log(user.followers);
+    console.log(follower.name);
+    const isFollowing = user.followers.includes(follower.name);
+    console.log(isFollowing);
+    if (isFollowing) {
+      const followerIndex = user.followers.indexOf(follower.name);
+      if (followerIndex !== -1) {
+        user.followers.splice(followerIndex, 1); // Remove follower from user's followers list
+        const userIndex = follower.following.indexOf(user.name);
+        if (userIndex !== -1) {
+          follower.following.splice(userIndex, 1); // Remove user from follower's following list
+          await user.save();
+          await follower.save();
+          return res.json({ message: "User unfollowed successfully." });
+        }
+      }
+    } else {
       user.followers.push(follower.name);
       follower.following.push(user.name);
       await user.save();
       await follower.save();
-    } else {
-      user.followers = user.followers.filter((f) => f !== follower.name);
-      follower.following = follower.following.filter((f) => f !== user.name);
-      await user.save();
-      await follower.save();
+      res.json({ message: "User followed successfully." });
     }
-
-    res.json({ message: "User followed successfully." });
   } catch (error) {
-    console.error("Error adding follower:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-exports.removeFollowers = async (req, res) => {
-  try {
-    const { username } = req.params;
-    const { followername } = req.body;
-
-    // Find the user to unfollow
-    const user = await StudentModel.findOne({ name: username });
-    // Find the follower
-    const follower = await StudentModel.findOne({ name: followername });
-
-    // Check if both user and follower exist
-    if (!user || !follower) {
-      return res.status(404).json({ message: "User or follower not found." });
-    }
-
-    // Check if the follower is currently following the user
-    const followerIndex = user.followers.indexOf(follower.name);
-    if (followerIndex !== -1) {
-      user.followers.splice(followerIndex, 1); // Remove follower from user's followers list
-      const userIndex = follower.following.indexOf(user.name);
-      if (userIndex !== -1) {
-        follower.following.splice(userIndex, 1); // Remove user from follower's following list
-        await user.save();
-        await follower.save();
-        return res.json({ message: "User unfollowed successfully." });
-      }
-    }
-
-    res
-      .status(400)
-      .json({ message: "User is not currently followed by the follower." });
-  } catch (error) {
-    console.error("Error removing follower:", error);
+    console.error("Error toggling follow:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -182,7 +155,7 @@ exports.removeFollowers = async (req, res) => {
 exports.getFollowingUsers = async (req, res) => {
   try {
     const { currentUser } = req.params;
-
+    console.log(currentUser);
     // Find the current user
     const user = await StudentModel.findOne({ name: currentUser });
 
@@ -192,11 +165,61 @@ exports.getFollowingUsers = async (req, res) => {
     }
 
     // Fetch the users followed by the current user
-    const followingUsers = await StudentModel.find({ followers: user._id });
-
-    res.json(followingUsers);
+    const followingUsers = await StudentModel.find({ followers: currentUser });
+    const names = followingUsers.map((user) => user.name);
+    console.log(names);
+    res.json(names);
   } catch (error) {
     console.error("Error fetching following users:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getFollowerDetails = async (req, res) => {
+  try {
+    const { currentUser } = req.params;
+    console.log(currentUser);
+
+    // Find the current user
+    const user = await StudentModel.findOne({ name: currentUser });
+
+    // Check if the current user exists
+    if (!user) {
+      return res.status(404).json({ message: "Current user not found." });
+    }
+
+    // Get the followers for the current user
+    const followerDetails = await StudentModel.find({ following: currentUser });
+    const followerCount = followerDetails.length;
+
+    console.log("Follower count:", followerCount);
+    console.log("Follower details:", followerDetails);
+    const names = followerDetails.map((user) => user.name);
+    res.json(names);
+  } catch (error) {
+    console.error("Error fetching follower details:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.deleteFollow =  async (req, res) => {
+  const { username } = req.params; // The student's username whose follower is being removed
+  const { followername } = req.body; // The username of the follower to remove
+
+  try {
+    // Find the student and update their followers array
+    const updatedStudent = await StudentModel.findOneAndUpdate(
+      { name: username }, // Assuming 'name' field holds the username. Adjust as needed.
+      { $pull: { followers: followername } }, // Remove the follower from the array
+      { new: true } // Returns the document after update was applied
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).send({ message: 'Student not found' });
+    }
+
+    res.send(updatedStudent);
+  } catch (error) {
+    console.error('Failed to remove follower:', error);
+    res.status(500).send({ message: 'Failed to remove follower' });
   }
 };

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -13,7 +13,8 @@ const HomePage = () => {
   const BASE_URL = Config.BASE_URL;
   const [chatroomsData, setChatroomsData] = useState([]);
   const [chatrooms, setChatrooms] = useState([]);
-  const [participants, setparticipants] = useState([]);
+  const [participants, setParticipants] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -42,15 +43,13 @@ const HomePage = () => {
 
   const fetchAllChat = async () => {
     try {
-      console.log('sending username', username);
       const response = await axios.get(
-        `${BASE_URL}/api/chat/allchatrooms?username=${username}`,
+        `${BASE_URL}/api/chat/allchatrooms?username=${username}`
       );
-      console.log('all chatrooms');
-      const participants = response.data.map(chatroom => chatroom.participants);
-      console.log(participants);
-      setparticipants(participants);
-      console.log(chatrooms);
+      const participants = response.data.map(
+        (chatroom) => chatroom.participants
+      );
+      setParticipants(participants);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
@@ -63,16 +62,14 @@ const HomePage = () => {
       });
 
       setChatrooms(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
   };
 
-  const renderChatroomItem = ({item}) => {
-    // Check if item.otherUserName matches the first participant in participants array
+  const renderChatroomItem = ({ item }) => {
     const isMentor = participants.some(
-      participant => participant[0] === item.otherUserName,
+      (participant) => participant[0] === item.otherUserName
     );
 
     return (
@@ -84,7 +81,8 @@ const HomePage = () => {
             userName: item.otherUserName,
             myUserName: username,
           })
-        }>
+        }
+      >
         <View style={styles.chatroomContent}>
           <Text style={styles.chatroomText}>
             {isMentor
@@ -102,11 +100,14 @@ const HomePage = () => {
       <FlatList
         data={chatrooms}
         renderItem={renderChatroomItem}
-        keyExtractor={item => item.chatroomId}
+        keyExtractor={(item) => item.chatroomId}
       />
       <TouchableOpacity
         style={styles.searchButton}
-        onPress={() => navigation.navigate('Searchh', {myUserName: username})}>
+        onPress={() =>
+          navigation.navigate('Searchh', { myUserName: username })
+        }
+      >
         <Icon name="search" size={24} color="white" />
       </TouchableOpacity>
     </View>
@@ -116,26 +117,25 @@ const HomePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#f5f5f5',
-    padding: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 10,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
+    textAlign: 'center',
   },
   chatroomItem: {
     backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 10,
     elevation: 3,
-  },
-  chatroomContent: {
     padding: 20,
   },
+  chatroomContent: {},
   chatroomText: {
     fontSize: 18,
     fontWeight: 'bold',

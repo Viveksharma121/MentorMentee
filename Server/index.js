@@ -55,6 +55,9 @@ app.use("/api", require("./routes/student"));
 const resource_route = require("./routes/Resource");
 app.use("/api/resource", resource_route);
 
+const chat_route = require("./routes/Chatroom");
+app.use("/api/chat", chat_route);
+
 db()
   .then(() => {
     app.listen(PORT, () => {
@@ -193,7 +196,7 @@ app.get("/users", async (req, res) => {
 
 app.post("/search", async (req, res) => {
   try {
-    const result = await User.findOne({ username: req.body.username });
+    const result = await User.findOne({ email: req.body.username });
     if (result) {
       res.status(200).send({ userName: result.username });
     } else {
@@ -400,7 +403,7 @@ app.post("/update-credits", async (req, res) => {
         creditsToAdd = 10;
         break;
       case "resourceAdd":
-        creditsToAdd = 50;
+        creditsToAdd = -250;
         break;
       case "Rating":
         // Adjust the conversion from rating to credits as per your requirement
@@ -411,7 +414,7 @@ app.post("/update-credits", async (req, res) => {
         break;
     }
 
-    if (creditsToAdd > 0) {
+    if (creditsToAdd > 0 || creditsToAdd < 0) {
       const user = await User.findOneAndUpdate(
         { username },
         { $inc: { credits: creditsToAdd } },
@@ -540,15 +543,5 @@ app.delete("/notifications/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting notification:", error);
     res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get('/rank', async (req, res) => {
-  try {
-    const users = await User.find().sort({ credits: -1 });
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ message: 'Server Error' });
   }
 });

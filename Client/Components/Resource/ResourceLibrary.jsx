@@ -1,38 +1,81 @@
-import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import base64 from 'base-64';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
+  Button,
   FlatList,
   Modal,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Button,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import axios from 'axios';
+import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AddResourceForm from './AddResourceForm';
-import Config from 'react-native-config';
 
 const ResourceLibrary = () => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Fetch resources again
+    fetchResources();
+    // Set refreshing to false after fetch is completed
+    setRefreshing(false);
+  }, []);
+
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
   const [resources, setResources] = useState([]);
   const [showAddResourceModal, setShowAddResourceModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [username, setusername] = useState('');
+  const [creditpoints, setcreditpoints] = useState(0);
+  const getName = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      console.log(token);
+      if (!token) {
+        throw new Error('Token not found');
+      }
+      const [, payload] = token.split('.');
+
+      const decodedPayload = base64.decode(payload);
+      const payloadObject = JSON.parse(decodedPayload);
+      const currentUser = payloadObject.username.toString();
+      console.log('currrr', currentUser);
+      setusername(currentUser);
+      getPoints(currentUser);
+    } catch (error) {}
+  };
 
   useEffect(() => {
+    getName();
     fetchResources();
   }, []);
+
+  const getPoints = async username => {
+    try {
+      const response = await axios.get(`${BASE_URL}/user/${username}`);
+      console.log(response.data.credits);
+      setcreditpoints(response.data.credits);
+    } catch (error) {
+      console.log(error + ' ubhbashchscshjbschbchwbhbc');
+    }
+  };
 
   const fetchResources = () => {
     axios
       .get(`${BASE_URL}/api/resource/allResources`)
-      .then((response) => {
+      .then(response => {
         setResources(response.data);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Error fetching resources:', error);
       });
   };
@@ -41,24 +84,25 @@ const ResourceLibrary = () => {
     setShowAddResourceModal(true);
   };
 
-  const handleResourceAdded = () => {
+  const handleResourceAdded = async () => {
     setShowAddResourceModal(false);
-    fetchResources(); // Refresh resource list
+    fetchResources();
+    await getPoints(username);
   };
 
-  const navigateToDetailScreen = (item) => {
-    navigation.navigate('ResourceDetail', { resource: item });
+  const navigateToDetailScreen = item => {
+    navigation.navigate('ResourceDetail', {resource: item});
   };
 
   const handleSearch = () => {
     axios
       .get(`${BASE_URL}/api/resource/searchResources`, {
-        params: { query: searchQuery },
+        params: {query: searchQuery},
       })
-      .then((response) => {
+      .then(response => {
         setResources(response.data);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Error searching resources:', error);
       });
   };
@@ -68,11 +112,10 @@ const ResourceLibrary = () => {
     fetchResources(); // Reset to the default list when search is cleared
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.resourceContainer}
-      onPress={() => navigateToDetailScreen(item)}
-    >
+      onPress={() => navigateToDetailScreen(item)}>
       <View style={styles.iconContainer}>
         <Icon name="link" size={24} color="blue" />
       </View>
@@ -101,7 +144,7 @@ const ResourceLibrary = () => {
           style={styles.searchInput}
           placeholder="Search by title or category"
           value={searchQuery}
-          onChangeText={(text) => setSearchQuery(text)}
+          onChangeText={text => setSearchQuery(text)}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Icon name="search" size={20} color="#fff" />
@@ -112,18 +155,31 @@ const ResourceLibrary = () => {
       </View>
       <FlatList
         data={resources}
-        keyExtractor={(item) => item._id}
+        keyExtractor={item => item._id}
         renderItem={renderItem}
         contentContainerStyle={styles.flatListContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
-      <TouchableOpacity style={styles.addButton} onPress={handleAddResource}>
-        <Text style={styles.addButtonText}>Add Resource</Text>
-      </TouchableOpacity>
+
+      {creditpoints > 1000 ? (
+        <TouchableOpacity style={styles.addButton} onPress={handleAddResource}>
+          <Text style={styles.addButtonText}>Add Resource</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.noCreditsContainer}>
+          <Text style={styles.noCreditsText}>
+            You need at least 1000 credit points to add a resource.
+          </Text>
+        </View>
+      )}
+      {console.log('Credit Points:', creditpoints)}
+
       <Modal
         visible={showAddResourceModal}
         animationType="slide"
-        onRequestClose={() => setShowAddResourceModal(false)}
-      >
+        onRequestClose={() => setShowAddResourceModal(false)}>
         <View style={styles.modalContainer}>
           <AddResourceForm onResourceAdded={handleResourceAdded} />
           <Button
@@ -149,6 +205,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
     color: '#fff', // White text color
+  },
+  noCreditsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  noCreditsText: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
   },
   flatListContainer: {
     flexGrow: 1,
