@@ -1,100 +1,102 @@
-import {useNavigation} from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Alert, Button, Text, TextInput, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
-import React, {useState} from 'react';
-import {
-  Alert,
-  Button,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Config from 'react-native-config';
-const SearchPage = ({route}) => {
-  console.log(route.params);
-  const BASE_URL = Config.BASE_URL;
-  const {myUserName} = route.params || {};
+
+const SearchPage = ({ route }) => {
+  const navigation = useNavigation();
+  const { myUserName } = route.params || {};
   const [userName, setUserName] = useState('');
   const [foundUserName, setFoundUserName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!userName.trim()) {
+      Alert.alert('Error', 'Please enter a username.');
+      return;
+    }
+
     if (userName === myUserName) {
-      Alert.alert('Alert', "You can't search yourself", [
-        {text: 'OK', onPress: () => console.log('OK Pressed')},
-      ]);
-    } else {
-      axios
-        .post(`${BASE_URL}/search`, {
-          username: userName,
-        })
-        .then(response => {
-          console.log('Response Data:', response.data);
-          setFoundUserName(response.data.userName); // Set the found name in state
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          Alert.alert('Alert', 'User does not exist.');
-        });
+      Alert.alert('Error', "You can't search for yourself.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${Config.BASE_URL}/search`, { username: userName });
+      setFoundUserName(response.data.userName);
+    } catch (error) {
+      Alert.alert('Error', 'User does not exist or there was a problem with the search.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUser = async () => {
-    console.log('Handle User function called: ', {
-      userName: foundUserName,
-      myUserName: myUserName,
-    });
-
     try {
-      // Make an API request to create or find a chatroom
-      const response = await axios.post(`${BASE_URL}/chatroom`, {
+      const response = await axios.post(`${Config.BASE_URL}/chatroom`, {
         userName: foundUserName,
         myUsername: myUserName,
       });
-      // .then(response => {
-      //   console.log('Response: ', response.data);
-      // })
-      // .catch(err => {
-      //   console.log('Error: ', err);
-      // });
-
-      const {data} = response;
 
       if (response.status === 200) {
-        const {chatroomId} = data;
-        console.log('Chatroom ID:', chatroomId);
         navigation.navigate('Chat', {
-          chatroomId: chatroomId,
+          chatroomId: response.data.chatroomId,
           userName: foundUserName,
           myUserName: myUserName,
         });
       } else {
-        console.error('Error:', data.error);
+        console.error('Unexpected response status:', response.status);
       }
     } catch (error) {
-      console.error('Error handling user:', error);
+      Alert.alert('Error', 'Failed to create or find a chatroom.');
     }
   };
 
-  const navigation = useNavigation();
-
   return (
-    <View>
+    <View style={styles.container}>
       <TextInput
-        placeholder="Enter email"
+        style={styles.input}
+        placeholder="Enter Username to be Searched"
         value={userName}
-        onChangeText={text => setUserName(text)}
+        onChangeText={setUserName}
       />
       <Button title="Search" onPress={handleSearch} />
-      {/* Conditionally render the card if foundEmail is not empty */}
+      {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
       {foundUserName ? (
-        <TouchableOpacity onPress={() => handleUser()}>
-          <View style={{marginVertical: 20}}>
-            <Text>{foundUserName}</Text>
-          </View>
+        <TouchableOpacity style={styles.userCard} onPress={handleUser}>
+          <Text style={styles.userName}>{foundUserName}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    marginBottom: 20,
+    borderRadius: 5,
+  },
+  userCard: {
+    marginVertical: 20,
+    backgroundColor: '#f9f9f9',
+    padding: 20,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userName: {
+    fontWeight: 'bold',
+  },
+});
 
 export default SearchPage;

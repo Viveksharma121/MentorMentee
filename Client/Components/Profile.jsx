@@ -1,115 +1,228 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import axios from 'axios';
-import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 import base64 from 'base-64';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
 
-const TopUsersPage = () => {
-  const BASE_URL = Config.BASE_URL;
-  const [users, setUsers] = useState([]);
-  const [username, setUsername] = useState('');
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Config from 'react-native-config';
+import { Avatar, Card, IconButton, Subheading, Title } from 'react-native-paper';
+const ProfilePage = () => {
   const navigation = useNavigation();
+  const BASE_URL = Config.BASE_URL;
+  const [userDetails, setUserDetails] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [projects, setProjects] = useState([]);
 
-  useEffect(() => {
-    fetchUsers();
-    getUsername();
-  }, []);
-
-  const getUsername = async () => {
+  const getToken = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
+      return token;
+    } catch (error) {
+      console.error('Error fetching token:', error);
+    }
+  };
+
+  const getUsernameFromToken = async token => {
+    try {
       if (!token) {
         throw new Error('Token not found');
       }
       const [, payload] = token.split('.');
       const decodedPayload = base64.decode(payload);
       const payloadObject = JSON.parse(decodedPayload);
-      setUsername(payloadObject.username.toString());
+      return payloadObject.username;
     } catch (error) {
       console.error('Error decoding token:', error);
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUserDetails = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/rank`);
-      const data = response.data;
-      const sortedUsers = data.sort((a, b) => b.credits - a.credits);
-      setUsers(sortedUsers);
+      const token = await getToken();
+      if (!token) {
+        console.error('Token not found');
+        return;
+      }
+      const username = await getUsernameFromToken(token);
+      if (!username) {
+        console.error('Username not found in token');
+        return;
+      }
+
+      const response = await axios.get(`${BASE_URL}/user/${username}`);
+      setUserDetails(response.data);
+
+      try {
+        const skillsResponse = await axios.get(
+          `${BASE_URL}/api/${username}/skills`,
+        );
+        setSkills(skillsResponse.data.skills || []);
+        setProjects(skillsResponse.data.projects || []);
+      } catch (error) {
+        console.error('Error fetching skills or projects:', error);
+        setSkills([]);
+        setProjects([]);
+      }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching user details:', error);
+      setUserDetails(null);
     }
   };
 
-  const navigateToUserProfile = (username) => {
-    navigation.navigate('UserProfile', { userName: username });
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('token');
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error clearing token:', error);
+    }
   };
 
-  const renderUserItem = ({ item }) => {
-    const isCurrentUser = item.username === username;
-    return (
-      <TouchableOpacity onPress={() => navigateToUserProfile(item.username)}>
-        <View style={[styles.userItem, isCurrentUser && styles.currentUser]}>
-          <Text style={[styles.username, isCurrentUser && styles.underline]}>
-            {item.username}
-          </Text>
-          <Text style={styles.credits}>{item.credits} credits</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserDetails();
+    }, []),
+  );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Top Users</Text>
-      <FlatList
-        data={users}
-        keyExtractor={(item) => item._id}
-        renderItem={renderUserItem}
-      />
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      {userDetails ? (
+        <>
+          <Avatar.Text
+            size={100}
+            label={userDetails.username[0].toUpperCase()}
+            style={styles.avatar}
+          />
+          <IconButton
+            icon="cart"
+            color="#000"
+            size={24}
+            onPress={() => navigation.navigate('BuyItemsPage')}
+            style={styles.logoutButton}
+          />
+          <Title style={styles.username}>{userDetails.username}</Title>
+          <Subheading style={styles.email}>
+            Email: {userDetails.email}
+          </Subheading>
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Skills</Text>
+            {skills.map((skill, index) => (
+              <Card key={index} style={styles.card}>
+                <Card.Content>
+                  <Text style={styles.cardText}>{skill}</Text>
+                </Card.Content>
+              </Card>
+            ))}
+          </View>
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Projects</Text>
+            {projects.map((project, index) => (
+              <Card key={index} style={styles.card}>
+                <Card.Content>
+                  <Text style={styles.cardText}>{project.title}</Text>
+                  <Text style={styles.linkText}>{project.githubLink}</Text>
+                </Card.Content>
+              </Card>
+            ))}
+          </View>
+        </>
+      ) : (
+        <Text>Loading user details...</Text>
+      )}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('SkillsForm')}>
+        <Text style={styles.addButtonText}>Add Skills / Projects</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('SavedTweets')}>
+        <Text style={styles.addButtonText}>View Saved Tweets</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  userItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  logoutButton: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    zIndex: 1,
+  },
+
+  avatar: {
+    backgroundColor: '#1da1f2',
     marginBottom: 10,
     elevation: 2,
-  },
-  currentUser: {
-    backgroundColor: '#ADD8E6', // Light Blue
+    borderRadius: 50, // Making the avatar circular
   },
   username: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10, // Adding some space below the username
   },
-  underline: {
-    textDecorationLine: 'underline',
-  },
-  credits: {
+  email: {
     fontSize: 16,
+    color: '#555',
+    marginBottom: 20,
+  },
+  sectionContainer: {
+    width: '90%',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  card: {
+    marginBottom: 10,
+    elevation: 2,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+  },
+  cardText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#007bff',
+    marginTop: 5,
+  },
+  addButton: {
+    backgroundColor: '#1da1f2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 5,
+    marginTop: 10,
+    elevation: 2,
+  },
+  addButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
-export default TopUsersPage;
+export default ProfilePage;

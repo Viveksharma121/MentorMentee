@@ -193,7 +193,7 @@ app.get("/users", async (req, res) => {
 
 app.post("/search", async (req, res) => {
   try {
-    const result = await User.findOne({ email: req.body.username });
+    const result = await User.findOne({ username: req.body.username });
     if (result) {
       res.status(200).send({ userName: result.username });
     } else {
@@ -550,21 +550,5 @@ app.get('/rank', async (req, res) => {
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Server Error' });
-  }
-});
-app.get('/rating', async (req, res) => {
-  try {
-    const resources = await Resource.find().sort({ rating: -1 });
-    // Modify the response to include createdBy as username and rating
-    console.log(resources);
-    const modifiedResources = resources.map(resource => ({
-      username: resource.createdBy, // Assuming createdBy is the username
-      rating: resource.rating,
-    }));
-
-    res.json(modifiedResources);
-  } catch (error) {
-    console.error('Error fetching resources by rating:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
 });
