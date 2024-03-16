@@ -545,3 +545,13 @@ app.delete("/notifications/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+app.get('/rank', async (req, res) => {
+  try {
+    const users = await User.find().sort({ credits: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
