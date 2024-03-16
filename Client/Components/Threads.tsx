@@ -87,6 +87,7 @@ const Threads = () => {
       userName();
       fetchPosts();
       fetchSavedPosts();
+      fetchNotifications();
     }, []),
   );
   useEffect(() => {
