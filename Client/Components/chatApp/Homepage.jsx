@@ -96,13 +96,18 @@ const HomePage = () => {
 
   const renderChatroomItem = ({item, participantRoles}) => {
     // role dhundho
-    const participantRoleIndex = participantRoles.findIndex(
-      entry => entry.username === item.otherUserName,
-    );
+    console.log(participantRoles);
+    const participantRoleIndex = participantRoles.findIndex(entry => {
+      console.log(entry.username + ' entry');
+      console.log(item.otherUserName + ' exit');
+      return entry.username === item.otherUserName;
+    });
 
+    console.log(participantRoleIndex + ' iddhbhc');
     let role = '';
     if (participantRoleIndex !== -1) {
       role = participantRoles[participantRoleIndex].role;
+      console.log(role + ' rolaa role');
       // jiska hua usko objecet se delete
       participantRoles.splice(participantRoleIndex, 1);
     }

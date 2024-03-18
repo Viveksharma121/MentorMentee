@@ -3,6 +3,9 @@ const db = require("../db/db");
 const { Tweet } = require("../db/db");
 const { v4: uuidv4 } = require("uuid");
 const User=require("../model/User")
+const path = require('path');
+
+
 router.get("/", async (req, res) => {
   try {
     const tweets = await Tweet.find();
@@ -26,24 +29,31 @@ router.get("/userthread", async (req, res) => {
 
 router.post("/threads", async (req, res) => {
   try {
-    const { user_name, content } = req.body;
+    const { user_name, content,image } = req.body;
+    
+    // Check if req.file is present, indicating that an image was uploaded
+    
+    console.log("Image path:", image); // Log the image path to verify if it's received
+    
     const id = uuidv4();
     const newTweet = new Tweet({
       id,
       user_name,
       content,
+      image, // Add the image field to the newTweet object
       likes: 0,
       created_at: new Date(),
     });
 
     const result = await newTweet.save();
-    console.log(result);
+    console.log("New tweet:", result);
     res.status(201).json(result);
   } catch (error) {
     console.error("Error creating tweet:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 router.put("/threads/:postId/like", async (req, res) => {
   try {

@@ -21,6 +21,9 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 };
+const path = require('path');
+app.use(express.static(path.join(__dirname,"public")));
+
 //passport modules And User model
 const passport = require("passport");
 const LocalStragery = require("passport-local");
@@ -80,6 +83,9 @@ app.get("/getAllUsers", async (req, res) => {
     res.json(error);
   }
 });
+
+
+
 
 let messages = [];
 
@@ -520,7 +526,7 @@ app.get("/notifications/:username", async (req, res) => {
   try {
     // Query the database to find notifications where the receiver is the provided username
     const notifications = await Notification.find({ receiver: username });
-
+    console.log(notifications);
     res.status(200).json(notifications);
   } catch (error) {
     console.error("Error fetching notifications:", error);
