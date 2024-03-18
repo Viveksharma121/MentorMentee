@@ -22,6 +22,7 @@ const db = async () => {
     console.log("DB Connection failed" + error);
   }
 };
+
 const commentSchema = new mongoose.Schema({
   user_name: {
     type: String,
@@ -32,7 +33,6 @@ const commentSchema = new mongoose.Schema({
     required: true,
   },
 });
-
 const tweetSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -45,6 +45,10 @@ const tweetSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true,
+  },
+  image: { // New field for storing image URL
+    type: String,
+    default: null, // Assuming there might be posts without images
   },
   likes: {
     type: Number,

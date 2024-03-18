@@ -3,11 +3,11 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, Image } from 'react-native';
 import Config from 'react-native-config';
 import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { Share } from 'react-native'; // Import Share from react-native
+import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker'; // Import ImagePickerResponse
 
 const Threads = () => {
   const Navigation = useNavigation();
@@ -42,6 +42,7 @@ const Threads = () => {
       console.log(JSON.stringify(error));
     }
   }
+
   //fetch notification count
 
   const fetchNotifications = async () => {
@@ -60,7 +61,7 @@ const Threads = () => {
   };
 
   const toggleComments = (postId: number) => {
-    setVisibleComments(prevState => ({
+    setVisibleComments((prevState) => ({
       ...prevState,
       [postId]: !prevState[postId], // Toggle visibility
     }));
@@ -86,22 +87,25 @@ const Threads = () => {
     useCallback(() => {
       userName();
       fetchPosts();
-      fetchSavedPosts();
       fetchNotifications();
-    }, []),
+    }, [])
   );
   useEffect(() => {
     fetchNotifications();
   }, [username]);
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({ user_name: '', content: '' });
+  const [newPost, setNewPost] = useState({
+    user_name: '',
+    content: '',
+    image: undefined, // Initialize image as undefined
+  }); // Add 'image' state
   const [savedPosts, setSavedPosts] = useState([]);
 
   const fetchSavedPosts = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/thread/${username}/saved-tweets`,
+        `${BASE_URL}/api/thread/${username}/saved-tweets`
       );
       console.log('neeche saved hai');
       console.log(response.data);
@@ -113,12 +117,34 @@ const Threads = () => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setNewPost({ user_name: username, content: '' });
+    setNewPost({ user_name: username, content: '', image: null }); // Reset 'image' state
   };
 
   const handleInputChange = (field: string, value: string) => {
     setNewPost({ ...newPost, [field]: value });
   };
+
+  // Function to handle image upload
+ // Function to handle image upload
+const handleImageUpload = () => {
+  launchImageLibrary({ mediaType: 'photo' }, (response) => {
+    if (response.error) {
+      console.log('Image picker error:', response.error);
+    } else if (!response.didCancel) {
+      if (response.assets && response.assets.length > 0) {
+        const imageUri = response.assets[0].uri; // Get the URI of the selected image
+        console.log("Selected image URI:", imageUri);
+        setNewPost({ ...newPost, image: imageUri }); // Set the image URI in 'newPost' state
+      } else {
+        console.log('No image selected');
+      }
+    } else {
+      console.log('Image selection cancelled');
+    }
+  });
+};
+
+
   const handleLogout = async () => {
     try {
       console.log(AsyncStorage);
@@ -132,12 +158,14 @@ const Threads = () => {
       console.error('Error clearing token:', error);
     }
   };
+
   const handleAddPost = async () => {
     try {
+      console.log("new post ",newPost);
       const newPostWithUsername = { ...newPost, user_name: username };
       const response = await axios.post(
         `${BASE_URL}/api/thread/threads`,
-        newPostWithUsername,
+        newPostWithUsername
       );
       setPosts([...posts, response.data]);
       fetchPosts();
@@ -151,7 +179,7 @@ const Threads = () => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        { userId: username },
+        { userId: username }
       );
 
       if (response.status === 200) {
@@ -175,7 +203,7 @@ const Threads = () => {
         } else {
           console.error(
             'Failed to update credits:',
-            creditsResponse.data.message,
+            creditsResponse.data.message
           );
         }
       }
@@ -188,7 +216,7 @@ const Threads = () => {
     try {
       await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
         user_name: username,
-        content: posts.find(post => post.id === postId)?.content,
+        content: posts.find((post) => post.id === postId)?.content,
       });
       fetchPosts();
       fetchSavedPosts();
@@ -223,7 +251,7 @@ const Threads = () => {
       } else {
         console.error(
           'Failed to update credits:',
-          creditsResponse.data.message,
+          creditsResponse.data.message
         );
       }
     } catch (error) {
@@ -238,7 +266,7 @@ const Threads = () => {
   };
   const handleEditPost = async (postId: number) => {
     try {
-      const post = posts.find(post => post.id === postId);
+      const post = posts.find((post) => post.id === postId);
 
       // Check if the logged-in user is the author of the post
       if (post.user_name === username) {
@@ -256,16 +284,16 @@ const Threads = () => {
   };
   const handleDeletePost = async (postId: number) => {
     try {
-      const post = posts.find(post => post.id === postId);
+      const post = posts.find((post) => post.id === postId);
 
       // Check if the logged-in user is the author of the post
       if (post.user_name === username) {
         const response = await axios.delete(
-          `${BASE_URL}/api/thread/threads/${postId}`,
+          `${BASE_URL}/api/thread/threads/${postId}`
         );
         if (response.status === 204) {
           // Post deleted successfully, update the posts state
-          setPosts(posts.filter(post => post.id !== postId));
+          setPosts(posts.filter((post) => post.id !== postId));
         }
       } else {
         console.log("You don't have permission to delete this post.");
@@ -277,12 +305,18 @@ const Threads = () => {
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
-      <Pressable onPress={() => Navigation.navigate('UserProfile', { userName: item.user_name })}>
+        <Pressable
+          onPress={() =>
+            Navigation.navigate('UserProfile', { userName: item.user_name })
+          }>
           <Text style={styles.postTitle}>{item.user_name}</Text>
         </Pressable>
-
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
+      {/* Image Display */}
+      {item.image && (
+        <Image source={{ uri: item.image }} style={styles.postImage} />
+      )}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <IconButton
           icon={() => (
@@ -309,13 +343,13 @@ const Threads = () => {
           icon={() => (
             <Icon
               name={
-                savedPosts.some(savedPost => savedPost.id === item.id)
+                savedPosts.some((savedPost) => savedPost.id === item.id)
                   ? 'bookmark'
                   : 'bookmark-o'
               }
               size={24}
               color={
-                savedPosts.some(savedPost => savedPost.id === item.id)
+                savedPosts.some((savedPost) => savedPost.id === item.id)
                   ? '#111111'
                   : '#000'
               }
@@ -325,13 +359,7 @@ const Threads = () => {
         />
         {/* Share Button */}
         <IconButton
-          icon={() => (
-            <Icon
-              name="share"
-              size={24}
-              color="#000"
-            />
-          )}
+          icon={() => <Icon name="share" size={24} color="#000" />}
           onPress={() => sharePost(item)}
         />
         {item.user_name === username && (
@@ -347,29 +375,39 @@ const Threads = () => {
           </>
         )}
       </View>
-      {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
-       <View style={styles.commentsContainer}>
-       <Text style={styles.commentsTitle}>Comments:</Text>
-       <FlatList
-         data={item.comments}
-         keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
-         renderItem={({ item: comment }) => (
-           <View style={styles.commentContainer}>
-             <Pressable
-               onPress={() => Navigation.navigate('UserProfile', { userName: comment.user_name })}
-             >
-               <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
-             </Pressable>
-             <Text style={styles.commentContent}>{comment.content}</Text>
-           </View>
-         )}
-       />
-     </View>
-     
-      ) : (
-        visibleComments[item.id] &&
-        item.comments.length < 1 && <Text>No comments yet</Text>
-      )}
+      {visibleComments[item.id] &&
+        item.comments &&
+        item.comments.length > 0 ? (
+          <View style={styles.commentsContainer}>
+            <Text style={styles.commentsTitle}>Comments:</Text>
+            <FlatList
+              data={item.comments}
+              keyExtractor={(comment, index) =>
+                (comment?.id ?? index).toString()
+              }
+              renderItem={({ item: comment }) => (
+                <View style={styles.commentContainer}>
+                  <Pressable
+                    onPress={() =>
+                      Navigation.navigate('UserProfile', {
+                        userName: comment.user_name,
+                      })
+                    }>
+                    <Text style={styles.commentAuthor}>
+                      {comment.user_name}:
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.commentContent}>
+                    {comment.content}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
+        ) : visibleComments[item.id] &&
+        item.comments.length < 1 ? (
+          <Text>No comments yet</Text>
+        ) : null}
       {activePostId === item.id && (
         <View style={styles.commentInputContainer}>
           <TextInput
@@ -417,90 +455,103 @@ const Threads = () => {
 
   return (
     <View style={styles.container}>
-    <View style={styles.header}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <IconButton
+              icon="bell"
+              onPress={() => Navigation.navigate('Notification')}
+              style={{ marginRight: 0 }}
+            />
+            {notificationCount > 0 && (
+              <Text
+                style={{
+                  backgroundColor: '#3B3B3B',
+                  borderRadius: 10,
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  fontSize: 12,
+                  color: 'white',
+                  fontWeight: 'bold',
+                }}>
+                {notificationCount}
+              </Text>
+            )}
+            <IconButton
+              icon="chat"
+              onPress={() => Navigation.navigate('Home')}
+              style={{ marginHorizontal: 20 }}
+            />
+            <IconButton
+              icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
+              onPress={() => Navigation.navigate('Rank')}
+              style={{ marginHorizontal: 16 }}
+            />
+            <IconButton
+              icon="map"
+              onPress={() => Navigation.navigate('RoadMap')}
+              style={{ marginHorizontal: 12 }}
+            />
+          </View>
           <IconButton
-            icon="bell"
-            onPress={() => Navigation.navigate('Notification')}
-            style={{ marginRight: 0}}
-          />
-          {notificationCount > 0 && (
-            <Text
-              style={{
-                backgroundColor: '#3B3B3B',
-                borderRadius: 10,
-                paddingHorizontal: 6,
-                paddingVertical: 2,
-                fontSize: 12,
-                color: 'white',
-                fontWeight: 'bold',
-              }}>
-              {notificationCount}
-            </Text>
-          )}
-          <IconButton
-            icon="chat"
-            onPress={() => Navigation.navigate('Home')}
-            style={{ marginHorizontal: 20}}
-          />
-          <IconButton
-    icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
-    onPress={() => Navigation.navigate('Rank')}
-    style={{ marginHorizontal: 16 }}
-  />
-          <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} style={{ marginHorizontal: 12 }} />
-        </View>
-        <IconButton
-          icon="logout"
-          color="#000"
-          size={24}
-          onPress={handleLogout}
-          style={{ marginHorizontal: 30 }}
-        />
-      </View>
-    </View>
-    <FlatList
-      data={posts}
-      keyExtractor={item => item._id.toString()}
-      renderItem={renderItem}
-    />
-    <Pressable style={styles.addButton} onPress={toggleModal}>
-      <Text style={styles.addButtonText}>+</Text>
-    </Pressable>
-    <Portal>
-      <Modal
-        visible={isModalVisible}
-        onDismiss={toggleModal}
-        contentContainerStyle={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>New Post</Text>
-          <IconButton
-            icon="close"
-            size={24}
+            icon="logout"
             color="#000"
-            onPress={toggleModal}
+            size={24}
+            onPress={handleLogout}
+            style={{ marginHorizontal: 30 }}
           />
         </View>
-        <TextInput
-          label="Post Content"
-          value={newPost.content}
-          onChangeText={text => handleInputChange('content', text)}
-          multiline
-          style={styles.modalTextInput}
-        />
-        <Button
-          mode="contained"
-          onPress={handleAddPost}
-          style={styles.modalButton}>
-          Post
-        </Button>
-      </Modal>
-    </Portal>
-  </View>
-  
+      </View>
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item._id.toString()}
+        renderItem={renderItem}
+      />
+      <Pressable style={styles.addButton} onPress={toggleModal}>
+        <Text style={styles.addButtonText}>+</Text>
+      </Pressable>
+      <Portal>
+        <Modal
+          visible={isModalVisible}
+          onDismiss={toggleModal}
+          contentContainerStyle={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>New Post</Text>
+            <IconButton
+              icon="close"
+              size={24}
+              color="#000"
+              onPress={toggleModal}
+            />
+          </View>
+          <TextInput
+            label="Post Content"
+            value={newPost.content}
+            onChangeText={(text) => handleInputChange('content', text)}
+            multiline
+            style={styles.modalTextInput}
+          />
+          {/* Image Upload Button */}
+          <Button
+            mode="contained"
+            onPress={handleImageUpload} // Call handleImageUpload function
+            style={styles.modalButton}>
+            Upload Image
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleAddPost}
+            style={styles.modalButton}>
+            Post
+          </Button>
+        </Modal>
+      </Portal>
+    </View>
   );
 };
+
+export default Threads;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -529,6 +580,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666666',
     marginBottom: 12,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    marginBottom: 12,
+    borderRadius: 10,
   },
   commentsContainer: {
     marginTop: 10,
@@ -591,111 +649,44 @@ const styles = StyleSheet.create({
     color: '#333333',
   },
   modalInputTitle: {
-    height: 40,
-    marginBottom: 16,
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  modalInputContent: {
-    marginBottom: 16,
-    textAlignVertical: 'top',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  submitButton: {
+    fontSize: 18,
     marginBottom: 8,
-    backgroundColor: '#4caf50',
-    borderRadius: 8,
-  },
-  cancelButton: {
-    marginBottom: 16,
     color: '#333333',
   },
-  commentButton: {
-    marginTop: 10,
-    backgroundColor: '#4caf50',
-    borderRadius: 8,
-  },
-  commentInputContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  commentInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    padding: 12,
-    marginBottom: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-  },
-  commentSubmitButton: {
-    marginBottom: 8,
-    backgroundColor: '#4caf50',
-    borderRadius: 8,
-  },
-  commentCancelButton: {
+  modalTextInput: {
     marginBottom: 16,
-    color: '#333333',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    margin: 20,
-    borderRadius: 12,
-    elevation: 6,
+  modalButton: {
+    marginVertical: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
-  modalCloseIcon: {
-    color: '#333333',
+  modalContent: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    marginHorizontal: 20,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333333',
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
   },
-  modalTextInput: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-    minHeight: 100,
-  },
-  modalButton: {
-    backgroundColor: '#ff5a5f',
+  commentInput: {
+    flex: 1,
+    marginRight: 8,
+    backgroundColor: '#ffffff',
     borderRadius: 8,
   },
-  logoutButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
+  commentSubmitButton: {
     borderRadius: 8,
+    marginRight: 8,
+  },
+  commentButton: {
+    marginTop: 8,
   },
 });
-
-export default Threads;
