@@ -211,12 +211,14 @@ app.post("/search", async (req, res) => {
 // This will search a chatroom if it already exists, if not then creates a chatroom
 app.post("/chatroom", async (req, res) => {
   try {
-    const { userName, myUsername } = req.body;
+    const { userName, myUsername } = req.body; //mentor , mentee
     console.log(req.body);
     // Check if a chatroom already exists for the participants
     let existingChatroom = await Chatroom.findOne({
-      participants: { $all: [userName, myUsername] },
+      participants: [userName, myUsername],
     });
+
+    // console.log(existingChatroom + " exist");
     console.log(existingChatroom + "exist");
     if (!existingChatroom) {
       const chatroomId = uuidv4();

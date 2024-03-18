@@ -42,15 +42,14 @@ const HomePage = () => {
 
   const fetchAllChat = async () => {
     try {
-      console.log('sending username', username);
+      // console.log('sending username', username);
       const response = await axios.get(
         `${BASE_URL}/api/chat/allchatrooms?username=${username}`,
       );
-      console.log('all chatrooms');
+      // console.log('all chatrooms');
       const participants = response.data.map(chatroom => chatroom.participants);
       console.log(participants);
       setparticipants(participants);
-      console.log(chatrooms);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
@@ -63,7 +62,6 @@ const HomePage = () => {
       });
 
       setChatrooms(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
@@ -71,9 +69,9 @@ const HomePage = () => {
 
   const renderChatroomItem = ({item}) => {
     // Check if item.otherUserName matches the first participant in participants array
-    const isMentor = participants.some(
-      participant => participant[0] === item.otherUserName,
-    );
+    const isMentor = participants.some(participant => {
+      return participant[0] === item.otherUserName;
+    });
 
     return (
       <TouchableOpacity
