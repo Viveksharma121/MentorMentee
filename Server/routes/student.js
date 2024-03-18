@@ -10,6 +10,6 @@ router.get("/searchitem", studentController.getSearchUser);
 router.post("/:username/followers", studentController.addFollowers);
 router.get("/:currentUser/following", studentController.getFollowingUsers);
 router.get("/:currentUser/followers", studentController.getFollowerDetails);
-
+router.delete("/:username/followers",studentController.deleteFollow);
 // router.post("/skills/update",studentController.updateSkills);
 module.exports = router;

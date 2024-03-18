@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useCallback, useEffect, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Config from 'react-native-config';
-import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
+import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Share } from 'react-native'; // Import Share from react-native
+
 const Threads = () => {
   const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -85,6 +87,7 @@ const Threads = () => {
       userName();
       fetchPosts();
       fetchSavedPosts();
+      fetchNotifications();
     }, []),
   );
   useEffect(() => {
@@ -92,7 +95,7 @@ const Threads = () => {
   }, [username]);
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({user_name: '', content: ''});
+  const [newPost, setNewPost] = useState({ user_name: '', content: '' });
   const [savedPosts, setSavedPosts] = useState([]);
 
   const fetchSavedPosts = async () => {
@@ -110,11 +113,11 @@ const Threads = () => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-    setNewPost({user_name: username, content: ''});
+    setNewPost({ user_name: username, content: '' });
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setNewPost({...newPost, [field]: value});
+    setNewPost({ ...newPost, [field]: value });
   };
   const handleLogout = async () => {
     try {
@@ -131,7 +134,7 @@ const Threads = () => {
   };
   const handleAddPost = async () => {
     try {
-      const newPostWithUsername = {...newPost, user_name: username};
+      const newPostWithUsername = { ...newPost, user_name: username };
       const response = await axios.post(
         `${BASE_URL}/api/thread/threads`,
         newPostWithUsername,
@@ -148,7 +151,7 @@ const Threads = () => {
     try {
       const response = await axios.put(
         `${BASE_URL}/api/thread/threads/${postId}/like`,
-        {userId: username},
+        { userId: username },
       );
 
       if (response.status === 200) {
@@ -243,7 +246,7 @@ const Threads = () => {
         // Set the post details in the state or context to be used in the edit form
 
         // Example using React Navigation
-        Navigation.navigate('EditPost', {postToEdit: post});
+        Navigation.navigate('EditPost', { postToEdit: post });
       } else {
         console.log("You don't have permission to edit this post.");
       }
@@ -271,13 +274,16 @@ const Threads = () => {
       console.error('Error deleting post:', error);
     }
   };
-  const renderItem = ({item}: {item: any}) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
-        <Text style={styles.postTitle}>{item.user_name}</Text>
+      <Pressable onPress={() => Navigation.navigate('UserProfile', { userName: item.user_name })}>
+          <Text style={styles.postTitle}>{item.user_name}</Text>
+        </Pressable>
+
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <IconButton
           icon={() => (
             <Icon
@@ -317,6 +323,17 @@ const Threads = () => {
           )}
           onPress={() => saveTweet(item.id)}
         />
+        {/* Share Button */}
+        <IconButton
+          icon={() => (
+            <Icon
+              name="share"
+              size={24}
+              color="#000"
+            />
+          )}
+          onPress={() => sharePost(item)}
+        />
         {item.user_name === username && (
           <>
             <IconButton
@@ -331,19 +348,24 @@ const Threads = () => {
         )}
       </View>
       {visibleComments[item.id] && item.comments && item.comments.length > 0 ? (
-        <View style={styles.commentsContainer}>
-          <Text style={styles.commentsTitle}>Comments:</Text>
-          <FlatList
-            data={item.comments}
-            keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
-            renderItem={({item: comment}) => (
-              <View style={styles.commentContainer}>
-                <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
-                <Text style={styles.commentContent}>{comment.content}</Text>
-              </View>
-            )}
-          />
-        </View>
+       <View style={styles.commentsContainer}>
+       <Text style={styles.commentsTitle}>Comments:</Text>
+       <FlatList
+         data={item.comments}
+         keyExtractor={(comment, index) => (comment?.id ?? index).toString()}
+         renderItem={({ item: comment }) => (
+           <View style={styles.commentContainer}>
+             <Pressable
+               onPress={() => Navigation.navigate('UserProfile', { userName: comment.user_name })}
+             >
+               <Text style={styles.commentAuthor}>{comment.user_name}:</Text>
+             </Pressable>
+             <Text style={styles.commentContent}>{comment.content}</Text>
+           </View>
+         )}
+       />
+     </View>
+     
       ) : (
         visibleComments[item.id] &&
         item.comments.length < 1 && <Text>No comments yet</Text>
@@ -381,16 +403,27 @@ const Threads = () => {
     </View>
   );
 
+  // Function to share a post
+  const sharePost = async (post: any) => {
+    try {
+      const shareOptions = {
+        message: `Check out this post by ${post.user_name}: ${post.content}`, // Message to be shared
+      };
+      await Share.share(shareOptions);
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={{flexDirection: 'row'}}>
+    <View style={styles.header}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <IconButton
             icon="bell"
-            onPress={
-              () => Navigation.navigate('Notification')
-            }
-            style={{marginRight: 8}}
+            onPress={() => Navigation.navigate('Notification')}
+            style={{ marginRight: 0}}
           />
           {notificationCount > 0 && (
             <Text
@@ -402,67 +435,70 @@ const Threads = () => {
                 fontSize: 12,
                 color: 'white',
                 fontWeight: 'bold',
-                position: 'absolute',
-                top: 9,
-                right: 11,
               }}>
               {notificationCount}
             </Text>
           )}
+          <IconButton
+            icon="chat"
+            onPress={() => Navigation.navigate('Home')}
+            style={{ marginHorizontal: 20}}
+          />
+          <IconButton
+    icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
+    onPress={() => Navigation.navigate('Rank')}
+    style={{ marginHorizontal: 16 }}
+  />
+          <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} style={{ marginHorizontal: 12 }} />
         </View>
-
         <IconButton
-          icon="chat"
-          // onPress={() => Navigation.navigate('ChatGpt')}
-          onPress={() => Navigation.navigate('Home')}
+          icon="logout"
+          color="#000"
+          size={24}
+          onPress={handleLogout}
+          style={{ marginHorizontal: 30 }}
         />
-        <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} />
-        <IconButton
-            icon="logout"
-            color="#000"
-            size={24}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-          />
       </View>
-      <FlatList
-        data={posts}
-        keyExtractor={item => item._id.toString()}
-        renderItem={renderItem}
-      />
-      <Pressable style={styles.addButton} onPress={toggleModal}>
-        <Text style={styles.addButtonText}>+</Text>
-      </Pressable>
-      <Portal>
-        <Modal
-          visible={isModalVisible}
-          onDismiss={toggleModal}
-          contentContainerStyle={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>New Post</Text>
-            <IconButton
-              icon="close"
-              size={24}
-              color="#000"
-              onPress={toggleModal}
-            />
-          </View>
-          <TextInput
-            label="Post Content"
-            value={newPost.content}
-            onChangeText={text => handleInputChange('content', text)}
-            multiline
-            style={styles.modalTextInput}
-          />
-          <Button
-            mode="contained"
-            onPress={handleAddPost}
-            style={styles.modalButton}>
-            Post
-          </Button>
-        </Modal>
-      </Portal>
     </View>
+    <FlatList
+      data={posts}
+      keyExtractor={item => item._id.toString()}
+      renderItem={renderItem}
+    />
+    <Pressable style={styles.addButton} onPress={toggleModal}>
+      <Text style={styles.addButtonText}>+</Text>
+    </Pressable>
+    <Portal>
+      <Modal
+        visible={isModalVisible}
+        onDismiss={toggleModal}
+        contentContainerStyle={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>New Post</Text>
+          <IconButton
+            icon="close"
+            size={24}
+            color="#000"
+            onPress={toggleModal}
+          />
+        </View>
+        <TextInput
+          label="Post Content"
+          value={newPost.content}
+          onChangeText={text => handleInputChange('content', text)}
+          multiline
+          style={styles.modalTextInput}
+        />
+        <Button
+          mode="contained"
+          onPress={handleAddPost}
+          style={styles.modalButton}>
+          Post
+        </Button>
+      </Modal>
+    </Portal>
+  </View>
+  
   );
 };
 const styles = StyleSheet.create({
@@ -661,6 +697,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
-
 
 export default Threads;

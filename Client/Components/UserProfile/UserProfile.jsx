@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dimensions,
   ScrollView,
@@ -14,7 +14,7 @@ import Config from 'react-native-config';
 import ProjectSlider from './ProjectSlider';
 import SkillSlider from './SkillSlider';
 
-const UserProfile = ({route, navigation}) => {
+const UserProfile = ({ route, navigation }) => {
   const BASE_URL = Config.BASE_URL;
   const username = route.params.userName;
   console.log('user getting from chat', route.params.userName);
@@ -127,7 +127,7 @@ const UserProfile = ({route, navigation}) => {
         },
       });
 
-      const {chatroomId} = response.data;
+      const { chatroomId } = response.data;
       console.log(chatroomId);
       // Assuming `Myusername` is the currently logged-in user's username
       navigation.navigate('ChatPage', {
@@ -143,28 +143,28 @@ const UserProfile = ({route, navigation}) => {
 
   const handleFollowButtonPress = async () => {
     try {
-      // if (following) {
-      //   // Unfollow the user
-      //   await axios.delete(`${BASE_URL}/api/${username}/followers`, {
-      //     data: {followername: Myusername},
-      //   });
-      //   setFollowing(false);
-      // } else {
-      // Follow the user
-      await axios.post(`${BASE_URL}/api/${username}/followers`, {
-        followername: Myusername,
-      });
       if (following) {
+        // Unfollow the user
+        await axios.delete(`${BASE_URL}/api/${username}/followers`, {
+          data: { followername: Myusername },
+        });
         setFollowing(false);
+        // Decrease the follower count since the user has unfollowed
+        setfollowerCount((prevCount) => prevCount - 1);
       } else {
+        // Follow the user
+        await axios.post(`${BASE_URL}/api/${username}/followers`, {
+          followername: Myusername,
+        });
         setFollowing(true);
+        // Increase the follower count since the user has followed
+        setfollowerCount((prevCount) => prevCount + 1);
       }
-
-      // }
     } catch (error) {
       console.error('Error following/unfollowing user:', error);
     }
   };
+
 
   const renderFollowButton = () => {
     if (following) {
@@ -276,7 +276,7 @@ const UserProfile = ({route, navigation}) => {
 
           <View style={styles.tweetsContainer}>
             <Text style={styles.tweetsTitle}>All Tweets</Text>
-            <ScrollView style={{maxHeight: 200}}>
+            <ScrollView style={{ maxHeight: 300 }}>
               {tweets.map((tweet, index) => (
                 <View key={tweet._id} style={styles.tweetContainer}>
                   <Text style={styles.tweetContent}>{tweet.content}</Text>

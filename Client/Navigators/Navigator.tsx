@@ -98,6 +98,7 @@ import HomePage from '../Components/chatApp/Homepage';
 import SearchPage from '../Components/chatApp/SearchPage';
 import BuyItemsPage from '../Components/BuyItemsPage';
 import Notification from '../Components/Notification';
+import Rank from '../Components/Rank'
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -182,6 +183,11 @@ const AppNavigator = () => {
       <Stack.Screen
         name="SkillsForm"
         component={SkillsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Rank"
+        component={Rank}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -271,6 +277,11 @@ const AppNavigator2 = () => {
         component={SkillsForm}
         options={{headerShown: false}}
       />
+       <Stack.Screen
+        name="Rank"
+        component={Rank}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -286,22 +297,22 @@ const MainTabNavigator = () => {
             iconName = focused
               ? require('../assets/logo.png') // Image for active state
               : require('../assets/logo.png'); // Image for inactive state
-          } else if (route.name === 'Profile') {
-            iconName = focused
-              ? require('../assets/profile.png') // Image for active state
-              : require('../assets/profile.png'); // Image for inactive state
-          } else if (route.name === 'SkillsForm') {
-            iconName = focused
-              ? require('../assets/skills.png') // Image for active state
-              : require('../assets/skills.png'); // Image for inactive state
           } else if (route.name === 'Search') {
+            iconName = focused
+              ? require('../assets/search.jpeg') // Image for active state
+              : require('../assets/search.jpeg'); // Image for inactive state
+          } else if (route.name === 'ChatBot') {
+            iconName = focused
+              ? require('../assets/chatbot.png') // Image for active state
+              : require('../assets/chatbot.png'); // Image for inactive state
+          } else if (route.name === 'Profile') {
             iconName = focused
               ? require('../assets/profile.png') // Image for active state
               : require('../assets/profile.png'); // Image for inactive state
           } else if (route.name === 'Resource') {
             iconName = focused
-              ? require('../assets/profile.png') // Image for active state
-              : require('../assets/profile.png'); // Image for inactive state
+              ? require('../assets/book.jpg') // Image for active state
+              : require('../assets/book.jpg'); // Image for inactive state
           }
 
           // Add outline style if focused
@@ -314,7 +325,7 @@ const MainTabNavigator = () => {
       })}>
       <Tab.Screen name="Threads" component={Threads} />
       <Tab.Screen name="Search" component={ProjectForm} />
-      <Tab.Screen name="ChatGpt" component={ChatGpt} />
+      <Tab.Screen name="ChatBot" component={ChatGpt} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
       <Tab.Screen name="Profile" component={Profile} />
       

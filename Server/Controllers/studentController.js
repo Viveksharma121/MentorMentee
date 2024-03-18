@@ -201,3 +201,25 @@ exports.getFollowerDetails = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+exports.deleteFollow =  async (req, res) => {
+  const { username } = req.params; // The student's username whose follower is being removed
+  const { followername } = req.body; // The username of the follower to remove
+
+  try {
+    // Find the student and update their followers array
+    const updatedStudent = await StudentModel.findOneAndUpdate(
+      { name: username }, // Assuming 'name' field holds the username. Adjust as needed.
+      { $pull: { followers: followername } }, // Remove the follower from the array
+      { new: true } // Returns the document after update was applied
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).send({ message: 'Student not found' });
+    }
+
+    res.send(updatedStudent);
+  } catch (error) {
+    console.error('Failed to remove follower:', error);
+    res.status(500).send({ message: 'Failed to remove follower' });
+  }
+};

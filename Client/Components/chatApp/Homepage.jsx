@@ -39,6 +39,7 @@ const HomePage = () => {
       fetchAllChat();
     }
   }, [username]);
+  const [participantRoles, setParticipantRoles] = useState([]);
 
   const fetchAllChat = async () => {
     try {
@@ -50,6 +51,9 @@ const HomePage = () => {
       const participants = response.data.map(chatroom => chatroom.participants);
       console.log(participants);
       setparticipants(participants);
+      const participantRoles = generateParticipantRoles(participants, username);
+      console.log(JSON.stringify(participantRoles) + ' i am generated lolll');
+      setParticipantRoles(participantRoles);
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
@@ -66,12 +70,42 @@ const HomePage = () => {
       console.error('Error fetching chatrooms:', error);
     }
   };
+  const generateParticipantRoles = (participants, loggedInUser) => {
+    const participantRoles = [];
 
-  const renderChatroomItem = ({item}) => {
-    // Check if item.otherUserName matches the first participant in participants array
-    const isMentor = participants.some(participant => {
-      return participant[0] === item.otherUserName;
+    participants.forEach(participant => {
+      const [mentor, mentee] = participant;
+      const roleEntry = {username: '', role: '', key: ''};
+
+      if (mentor === loggedInUser) {
+        roleEntry.username = mentee;
+        roleEntry.role = 'Mentee';
+      } else {
+        roleEntry.username = mentor;
+        roleEntry.role = 'Mentor';
+      }
+
+      // unique key uniqueness ke liye banaya tha but not in use tbh
+      roleEntry.key = roleEntry.username + '_' + roleEntry.role;
+
+      participantRoles.push(roleEntry);
     });
+
+    return participantRoles;
+  };
+
+  const renderChatroomItem = ({item, participantRoles}) => {
+    // role dhundho
+    const participantRoleIndex = participantRoles.findIndex(
+      entry => entry.username === item.otherUserName,
+    );
+
+    let role = '';
+    if (participantRoleIndex !== -1) {
+      role = participantRoles[participantRoleIndex].role;
+      // jiska hua usko objecet se delete
+      participantRoles.splice(participantRoleIndex, 1);
+    }
 
     return (
       <TouchableOpacity
@@ -85,9 +119,7 @@ const HomePage = () => {
         }>
         <View style={styles.chatroomContent}>
           <Text style={styles.chatroomText}>
-            {isMentor
-              ? `${item.otherUserName} (Mentor)`
-              : `${item.otherUserName} (Mentee)`}
+            {`${item.otherUserName} (${role})`}
           </Text>
         </View>
       </TouchableOpacity>
@@ -99,7 +131,7 @@ const HomePage = () => {
       <Text style={styles.title}>Chats</Text>
       <FlatList
         data={chatrooms}
-        renderItem={renderChatroomItem}
+        renderItem={({item}) => renderChatroomItem({item, participantRoles})}
         keyExtractor={item => item.chatroomId}
       />
       <TouchableOpacity

@@ -35,8 +35,8 @@ const SearchPage = () => {
     } else {
       const filtered = results.filter(
         (user) =>
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          (user.skills && user.skills.includes(query.toLowerCase()))
+          user.name.toLowerCase().includes(query.toLowerCase()) || // Check if name matches
+          (user.skills && user.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()))) // Check if any skill matches
       );
       setFilteredResults(filtered);
     }
