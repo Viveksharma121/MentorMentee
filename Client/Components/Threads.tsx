@@ -9,6 +9,8 @@ import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper
 import Icon from 'react-native-vector-icons/FontAwesome';
 // import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker'; // Import ImagePickerResponse
 import ImagePicker from 'react-native-image-crop-picker';
+import Carousel from 'react-native-snap-carousel';
+
 const Threads = () => {
   const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -298,145 +300,169 @@ const Threads = () => {
       console.error('Error deleting post:', error);
     }
   };
+  const renderCarouselItem = ({ item }: { item: any }) => (
+    <View style={styles.carouselItem}>
+      <Image source={{ uri: item }} style={styles.image} />
+    </View>
+  );
+
+  // Go to the next image in the carousel
+  const goToNextImage = () => {
+    if (carouselRef.current) {
+      carouselRef.current.snapToNext();
+    }
+  };
+
+  // Go to the previous image in the carousel
+  const goToPrevImage = () => {
+    if (carouselRef.current) {
+      carouselRef.current.snapToPrev();
+    }
+  }; 
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.postContainer}>
-    <View style={styles.postHeader}>
-      <Pressable
-        onPress={() =>
-          Navigation.navigate('UserProfile', { userName: item.user_name })
-        }>
-        <Text style={styles.postTitle}>{item.user_name}</Text>
-      </Pressable>
-    </View>
-    <Text style={styles.postContent}>{item.content}</Text>
-    {/* Image Display */}
-    {item.image && item.image.length > 0 && item.image.map((imagePath, index) => (
-  <Image key={index} source={{ uri: imagePath }} style={styles.postImage} />
-))}
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <IconButton
-        icon={() => (
-          <Icon
-            name={item.liked ? 'heart' : 'heart-o'}
-            size={24}
-            color={item.liked ? '#FF69B4' : '#000'}
-          />
+      <View style={styles.postHeader}>
+        <Pressable
+          onPress={() =>
+            Navigation.navigate('UserProfile', { userName: item.user_name })
+          }>
+          <Text style={styles.postTitle}>{item.user_name}</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.postContent}>{item.content}</Text>
+      {/* Carousel */}
+      <Carousel
+        data={item.image}
+        renderItem={({ item: imagePath }: { item: string }) => (
+          <Image source={{ uri: imagePath }} style={styles.postImage} />
         )}
-        onPress={() => handleLike(item.id)}
+        sliderWidth={300}
+        itemWidth={300}
       />
-      <Text>{item.likes}</Text>
-      <IconButton
-        icon={() => (
-          <Icon
-            name={commentsVisible ? 'comment' : 'comment-o'}
+      {/* Rest of the content */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <IconButton
+          icon={() => (
+            <Icon
+              name={item.liked ? 'heart' : 'heart-o'}
+              size={24}
+              color={item.liked ? '#FF69B4' : '#000'}
+            />
+          )}
+          onPress={() => handleLike(item.id)}
+        />
+        <Text>{item.likes}</Text>
+        <IconButton
+          icon={() => (
+            <Icon
+              name={commentsVisible ? 'comment' : 'comment-o'}
+              size={24}
+              color="#000"
+            />
+          )}
+          onPress={() => toggleComments(item.id)}
+        />
+        <IconButton
+          icon={() => (
+            <Icon
+              name={
+                savedPosts.some((savedPost) => savedPost.id === item.id)
+                  ? 'bookmark'
+                  : 'bookmark-o'
+              }
+              size={24}
+              color={
+                savedPosts.some((savedPost) => savedPost.id === item.id)
+                  ? '#111111'
+                  : '#000'
+              }
+            />
+          )}
+          onPress={() => saveTweet(item.id)}
+        />
+        {/* Share Button */}
+        <IconButton
+          icon={() => <Icon name="share" size={24} color="#000" />}
+          onPress={() => sharePost(item)}
+        />
+        {item.user_name === username && (
+          <>
+            <IconButton
+              icon={() => <Icon name="edit" size={24} color="#000" />}
+              onPress={() => handleEditPost(item.id)}
+            />
+            <IconButton
+              icon={() => <Icon name="trash" size={24} color="#FF0000" />}
+              onPress={() => handleDeletePost(item.id)}
+            />
+          </>
+        )}
+      </View>
+      {visibleComments[item.id] &&
+        item.comments &&
+        item.comments.length > 0 ? (
+          <View style={styles.commentsContainer}>
+            <Text style={styles.commentsTitle}>Comments:</Text>
+            <FlatList
+              data={item.comments}
+              keyExtractor={(comment, index) =>
+                (comment?.id ?? index).toString()
+              }
+              renderItem={({ item: comment }) => (
+                <View style={styles.commentContainer}>
+                  <Pressable
+                    onPress={() =>
+                      Navigation.navigate('UserProfile', {
+                        userName: comment.user_name,
+                      })
+                    }>
+                    <Text style={styles.commentAuthor}>
+                      {comment.user_name}:
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.commentContent}>
+                    {comment.content}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
+        ) : visibleComments[item.id] &&
+        item.comments.length < 1 ? (
+          <Text>No comments yet</Text>
+        ) : null}
+      {activePostId === item.id && (
+        <View style={styles.commentInputContainer}>
+          <TextInput
+            style={styles.commentInput}
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Write a comment..."
+          />
+          <Button
+            mode="contained"
+            onPress={() => addComment(item.id)}
+            style={styles.commentSubmitButton}>
+            Submit
+          </Button>
+          <IconButton
+            icon="close"
             size={24}
             color="#000"
-          />
-        )}
-        onPress={() => toggleComments(item.id)}
-      />
-      <IconButton
-        icon={() => (
-          <Icon
-            name={
-              savedPosts.some((savedPost) => savedPost.id === item.id)
-                ? 'bookmark'
-                : 'bookmark-o'
-            }
-            size={24}
-            color={
-              savedPosts.some((savedPost) => savedPost.id === item.id)
-                ? '#111111'
-                : '#000'
-            }
-          />
-        )}
-        onPress={() => saveTweet(item.id)}
-      />
-      {/* Share Button */}
-      <IconButton
-        icon={() => <Icon name="share" size={24} color="#000" />}
-        onPress={() => sharePost(item)}
-      />
-      {item.user_name === username && (
-        <>
-          <IconButton
-            icon={() => <Icon name="edit" size={24} color="#000" />}
-            onPress={() => handleEditPost(item.id)}
-          />
-          <IconButton
-            icon={() => <Icon name="trash" size={24} color="#FF0000" />}
-            onPress={() => handleDeletePost(item.id)}
-          />
-        </>
-      )}
-    </View>
-    {visibleComments[item.id] &&
-      item.comments &&
-      item.comments.length > 0 ? (
-        <View style={styles.commentsContainer}>
-          <Text style={styles.commentsTitle}>Comments:</Text>
-          <FlatList
-            data={item.comments}
-            keyExtractor={(comment, index) =>
-              (comment?.id ?? index).toString()
-            }
-            renderItem={({ item: comment }) => (
-              <View style={styles.commentContainer}>
-                <Pressable
-                  onPress={() =>
-                    Navigation.navigate('UserProfile', {
-                      userName: comment.user_name,
-                    })
-                  }>
-                  <Text style={styles.commentAuthor}>
-                    {comment.user_name}:
-                  </Text>
-                </Pressable>
-                <Text style={styles.commentContent}>
-                  {comment.content}
-                </Text>
-              </View>
-            )}
+            onPress={closeCommentBox}
           />
         </View>
-      ) : visibleComments[item.id] &&
-      item.comments.length < 1 ? (
-        <Text>No comments yet</Text>
-      ) : null}
-    {activePostId === item.id && (
-      <View style={styles.commentInputContainer}>
-        <TextInput
-          style={styles.commentInput}
-          value={newComment}
-          onChangeText={setNewComment}
-          placeholder="Write a comment..."
-        />
+      )}
+      {visibleComments[item.id] && (
         <Button
           mode="contained"
-          onPress={() => addComment(item.id)}
-          style={styles.commentSubmitButton}>
-          Submit
+          onPress={() => setActivePostId(item.id)}
+          style={styles.commentButton}>
+          Comment
         </Button>
-        <IconButton
-          icon="close"
-          size={24}
-          color="#000"
-          onPress={closeCommentBox}
-        />
-      </View>
-    )}
-    {visibleComments[item.id] && (
-      <Button
-        mode="contained"
-        onPress={() => setActivePostId(item.id)}
-        style={styles.commentButton}>
-        Comment
-      </Button>
-    )}
-  </View>
-  
-    );
+      )}
+    </View>
+  );
   
     // Function to share a post
     const sharePost = async (post: any) => {
