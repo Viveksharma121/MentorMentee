@@ -27,33 +27,33 @@ router.get("/userthread", async (req, res) => {
   }
 });
 
-router.post("/threads", async (req, res) => {
+
+router.post('/threads', async (req, res) => {
   try {
-    const { user_name, content,image } = req.body;
+    const { user_name, content, image } = req.body;
+
+    // Check if image is an array and if each element is a valid URL (basic validation)
     
-    // Check if req.file is present, indicating that an image was uploaded
-    
-    console.log("Image path:", image); // Log the image path to verify if it's received
-    
+
     const id = uuidv4();
     const newTweet = new Tweet({
       id,
       user_name,
       content,
-      image, // Add the image field to the newTweet object
+      image,
       likes: 0,
       created_at: new Date(),
     });
 
     const result = await newTweet.save();
     console.log("New tweet:", result);
+
     res.status(201).json(result);
   } catch (error) {
     console.error("Error creating tweet:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 router.put("/threads/:postId/like", async (req, res) => {
   try {

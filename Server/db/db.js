@@ -33,6 +33,7 @@ const commentSchema = new mongoose.Schema({
     required: true,
   },
 });
+
 const tweetSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -46,9 +47,9 @@ const tweetSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  image: { // New field for storing image URL
-    type: String,
-    default: null, // Assuming there might be posts without images
+  image: { // Updated field
+    type: [String],
+    default: [],
   },
   likes: {
     type: Number,
