@@ -10,6 +10,8 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 // import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker'; // Import ImagePickerResponse
 import ImagePicker from 'react-native-image-crop-picker';
 import Carousel from 'react-native-snap-carousel';
+import { Share } from 'react-native';
+
 
 const Threads = () => {
   const Navigation = useNavigation();

@@ -99,6 +99,9 @@ import SearchPage from '../Components/chatApp/SearchPage';
 import BuyItemsPage from '../Components/BuyItemsPage';
 import Notification from '../Components/Notification';
 import Rank from '../Components/Rank'
+import SessionsForm from '../Components/SessionsForm'
+import Session from '../Components/Session';
+import SessionsDetail from '../Components/SessionDetail';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -188,6 +191,21 @@ const AppNavigator = () => {
       <Stack.Screen
         name="Rank"
         component={Rank}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Session"
+        component={Session}
+        options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="SessionsForm"
+        component={SessionsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsDetail"
+        component={SessionsDetail}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
@@ -282,6 +300,21 @@ const AppNavigator2 = () => {
         component={Rank}
         options={{headerShown: false}}
       />
+       <Stack.Screen
+        name="Session"
+        component={Session}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsForm"
+        component={SessionsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsDetail"
+        component={SessionsDetail}
+        options={{headerShown: false}}
+      />
     </Stack.Navigator>
   );
 };
@@ -326,6 +359,7 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Threads" component={Threads} />
       <Tab.Screen name="Search" component={ProjectForm} />
       <Tab.Screen name="ChatBot" component={ChatGpt} />
+      <Tab.Screen name="Workshop" component={Session} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
       <Tab.Screen name="Profile" component={Profile} />
       
