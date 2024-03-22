@@ -49,20 +49,7 @@ const Threads = () => {
 
   //fetch notification count
 
-  const fetchNotifications = async () => {
-    try {
-      console.log(username + 'fetch noti ka username');
-      const response = await axios.get(`${BASE_URL}/notifications/${username}`);
-      if (response.status === 200) {
-        setNotificationCount(response.data.length);
-        console.log(response.data.length);
-      } else {
-        console.error('Error:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
+  
 
   const toggleComments = (postId: number) => {
     setVisibleComments((prevState) => ({
@@ -84,6 +71,20 @@ const Threads = () => {
       setUsername(payloadObject.username.toString());
     } catch (error) {
       console.error('Error decoding token:', error);
+    }
+  };
+  const fetchNotifications = async () => {
+    try {
+      console.log(username + 'fetch noti ka username');
+      const response = await axios.get(`${BASE_URL}/notifications/${username}`);
+      if (response.status === 200) {
+        setNotificationCount(response.data.length);
+        console.log(response.data.length);
+      } else {
+        console.error('Error:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
     }
   };
 
