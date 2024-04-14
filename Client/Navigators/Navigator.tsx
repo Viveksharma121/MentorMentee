@@ -323,7 +323,7 @@ const MainTabNavigator = () => {
           return <Image source={iconName} style={{width: 24, height: 24}} />;
         },
       })}>
-      <Tab.Screen name="Threads" component={Threads} />
+      <Tab.Screen name="Threads" component={Threads} options={{ headerShown: false }}/>
       <Tab.Screen name="Search" component={ProjectForm} />
       <Tab.Screen name="ChatBot" component={ChatGpt} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />

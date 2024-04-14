@@ -3,7 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, Image, Dimensions, ScrollView } from 'react-native';
 import Config from 'react-native-config';
 import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -287,7 +287,7 @@ const Threads = () => {
           icon={() => (
             <Icon
               name={item.liked ? 'heart' : 'heart-o'}
-              size={24}
+              size={20}
               color={item.liked ? '#FF69B4' : '#000'}
             />
           )}
@@ -298,7 +298,7 @@ const Threads = () => {
           icon={() => (
             <Icon
               name={commentsVisible ? 'comment' : 'comment-o'}
-              size={24}
+              size={20}
               color="#000"
             />
           )}
@@ -312,7 +312,7 @@ const Threads = () => {
                   ? 'bookmark'
                   : 'bookmark-o'
               }
-              size={24}
+              size={20}
               color={
                 savedPosts.some(savedPost => savedPost.id === item.id)
                   ? '#111111'
@@ -327,7 +327,7 @@ const Threads = () => {
           icon={() => (
             <Icon
               name="share"
-              size={24}
+              size={20}
               color="#000"
             />
           )}
@@ -336,11 +336,11 @@ const Threads = () => {
         {item.user_name === username && (
           <>
             <IconButton
-              icon={() => <Icon name="edit" size={24} color="#000" />}
+              icon={() => <Icon name="edit" size={20} color="#000" />}
               onPress={() => handleEditPost(item.id)}
             />
             <IconButton
-              icon={() => <Icon name="trash" size={24} color="#FF0000" />}
+              icon={() => <Icon name="trash" size={20} color="#FF0000" />}
               onPress={() => handleDeletePost(item.id)}
             />
           </>
@@ -414,6 +414,26 @@ const Threads = () => {
     }
   };
 
+   // Get the width and height of the screen
+  const { width, height } = Dimensions.get('window');
+    const [currentPage, setCurrentPage] = useState(0);
+
+  // Get the width of the screen
+  // const screenWidth = Dimensions.get('window').width;
+
+  const handleScroll = (event) => {
+    const { x } = event.nativeEvent.contentOffset;
+    const pageIndex = Math.round(x / width);
+    setCurrentPage(pageIndex);
+  };
+
+    // Import images
+  const images = [
+    require('../assets/image1.jpg'),
+    require('../assets/image2.jpg'),
+    require('../assets/image3.jpg'),
+  ];
+
   return (
     <View style={styles.container}>
     <View style={styles.header}>
@@ -422,16 +442,16 @@ const Threads = () => {
           <IconButton
             icon="bell"
             onPress={() => Navigation.navigate('Notification')}
-            style={{ marginRight: 0}}
+            style={{ marginRight: 0, marginTop: 0}}
           />
           {notificationCount > 0 && (
             <Text
               style={{
                 backgroundColor: '#3B3B3B',
                 borderRadius: 10,
-                paddingHorizontal: 6,
+                paddingHorizontal: 4,
                 paddingVertical: 2,
-                fontSize: 12,
+                fontSize: 8,
                 color: 'white',
                 fontWeight: 'bold',
               }}>
@@ -441,12 +461,12 @@ const Threads = () => {
           <IconButton
             icon="chat"
             onPress={() => Navigation.navigate('Home')}
-            style={{ marginHorizontal: 20}}
+            style={{ marginHorizontal: 20, marginTop: 0}}
           />
           <IconButton
     icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
     onPress={() => Navigation.navigate('Rank')}
-    style={{ marginHorizontal: 16 }}
+    style={{ marginHorizontal: 16, marginTop: 0 }}
   />
           <IconButton icon="map" onPress={() => Navigation.navigate('RoadMap')} style={{ marginHorizontal: 12 }} />
         </View>
@@ -455,10 +475,35 @@ const Threads = () => {
           color="#000"
           size={24}
           onPress={handleLogout}
-          style={{ marginHorizontal: 30 }}
+          style={{ marginHorizontal: 30, marginTop: 0 }}
         />
       </View>
-    </View>
+      </View>
+           {/* Horizontal ScrollView for images */}
+      <ScrollView
+        horizontal
+        pagingEnabled
+        contentContainerStyle={{ flexGrow: 1 }}
+        onScroll={handleScroll}
+        scrollEventThrottle={16} // Adjust as needed
+      >
+        {/* Images */}
+        {images.map((image, index) => (
+          <View key={index} style={{ width: width*0.92, justifyContent: 'center', alignItems: 'center' }}>
+            <Image
+              source={image}
+              style={{ width: width * 0.5, height: (width) / 3, resizeMode: 'contain', alignSelf: 'center' }}
+            />
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Pagination dots */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 5 }}>
+        {Array.from(Array(3).keys()).map(index => (
+          <View key={index} style={[styles.dot, { backgroundColor: index === currentPage ? 'blue' : 'gray' }]} />
+        ))}
+      </View>
     <FlatList
       data={posts}
       keyExtractor={item => item._id.toString()}
@@ -645,7 +690,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 6,
     paddingHorizontal: 16,
   },
   headerTitle: {
@@ -694,6 +739,12 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
     borderRadius: 8,
+  },
+    dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
   },
 });
 
