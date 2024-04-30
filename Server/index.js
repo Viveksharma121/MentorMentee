@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 app.use(express.json());
 app.use(cors());
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 const session = require("express-session");
 //config/objects used in sessions
 const sessionConfig = {
@@ -21,14 +21,14 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 };
-const path = require('path');
-app.use(express.static(path.join(__dirname,"public")));
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
 
 //passport modules And User model
 const passport = require("passport");
 const LocalStragery = require("passport-local");
 const User = require("./model/User");
-const Session=require("./model/Session");
+const Session = require("./model/Session");
 const Notification = require("./model/Notification");
 //to use sessions
 app.use(session(sessionConfig));
@@ -84,9 +84,6 @@ app.get("/getAllUsers", async (req, res) => {
     res.json(error);
   }
 });
-
-
-
 
 let messages = [];
 
@@ -552,5 +549,169 @@ app.delete("/notifications/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting notification:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/rank", async (req, res) => {
+  try {
+    const users = await User.find().sort({ credits: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.post("/session/add", async (req, res) => {
+  try {
+    // Extract data from the request body
+    const {
+      title,
+      description,
+      capacity,
+      createdBy,
+      category,
+      meetingLink,
+      meetingDate,
+      enrolledStudents,
+      image,
+    } = req.body;
+    console.log(req.body.image);
+    // Create a new session document
+    const session = new Session({
+      title,
+      description,
+      capacity,
+      createdBy,
+      category,
+      meetingLink, // Include meeting link
+      meetingDate, // Include meeting date
+      enrolledStudents, // Include enrolled students
+      image: image, // Include image URL
+    });
+    console.log("session ", session);
+
+    // Save the session to the database
+    await session.save();
+
+    // Send a success response
+    res.status(201).json({ message: "Session created successfully", session });
+  } catch (error) {
+    // If an error occurs, send an error response
+    console.error("Error creating session:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/sessions", async (req, res) => {
+  try {
+    const sessions = await Session.find();
+    res.status(200).json(sessions);
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.get("/sessions/:sessionId", async (req, res) => {
+  try {
+    const sessionId = req.params.sessionId;
+    const session = await Session.findById(sessionId); // Find session by ID
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    // If session is found, return it in the response
+    res.json(session);
+  } catch (error) {
+    console.error("Error fetching session:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+// Route to enroll in a session
+app.post("/sessions/enroll/:sessionId", async (req, res) => {
+  const { sessionId } = req.params;
+  const { username } = req.body;
+  console.log("username", username); // Retrieve username from request body
+  console.log("session id ", sessionId);
+  try {
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+    if (session.capacity === 0) {
+      return res.status(400).json({ message: "Session is full" });
+    }
+    // Find user by username
+    const user = await User.findOne({ username });
+    console.log("user", user);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Check if the session has enrolledStudents array
+    if (!Array.isArray(session.enrolledStudents)) {
+      session.enrolledStudents = []; // Initialize enrolledStudents array if not already present
+    }
+    // Check if the user already enrolled in the session
+    const alreadyEnrolled = session.enrolledStudents.some(
+      (student) => student.username === user.username
+    );
+    if (alreadyEnrolled) {
+      return res
+        .status(400)
+        .json({ message: "You are already enrolled in this session" });
+    }
+    // Add user to the enrolled students list
+    session.enrolledStudents.push({
+      username: user.username,
+      email: user.email,
+    });
+    session.capacity--;
+    await session.save();
+
+    // Sending email to the enrolled user
+    const mailTransporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "mentease2@gmail.com", // Update with your email address
+        pass: "zocauzshvwdnxohd", // Update with your email password
+      },
+    });
+
+    const mailOptions = {
+      from: "shiroshetty30l@gmail.com", // Update with your email address
+      to: user.email, // Send email to the enrolled user
+      subject: "You have been enrolled in a session",
+      text: `Dear ${user.username},\n\nYou have successfully enrolled in the session "${session.title}".\n\nSession Details:\nTitle: ${session.title}\nDescription: ${session.description}\nMeeting Date: ${session.meetingDate}\nMeeting Link: ${session.meetingLink}\n\nThank you!`,
+    };
+
+    mailTransporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
+
+    res.status(200).json({ message: "Enrolled successfully" });
+  } catch (error) {
+    console.error("Error enrolling:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.delete("/sessions/:sessionId", async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    const session = await Session.findByIdAndDelete(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+    res.status(200).json({ message: "Session deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting session:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });

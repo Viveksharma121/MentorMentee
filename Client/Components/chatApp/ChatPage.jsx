@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   Modal,
   ScrollView,
@@ -14,10 +15,10 @@ import {
 import Config from 'react-native-config';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-const ChatPage = ({ route }) => {
+const ChatPage = ({route}) => {
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
-  const { chatroomId, userName, myUserName } = route.params;
+  const {chatroomId, userName, myUserName} = route.params;
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
@@ -28,13 +29,13 @@ const ChatPage = ({ route }) => {
   const [isMentoringSessionActive, setIsMentoringSessionActive] =
     useState(false);
   const [receiver, setReceiver] = useState('');
-  useEffect(() => {
-    (async () => {
-      await fetchMessages();
-      await fetchParticipant(chatroomId);
-      await fetchMentoringSessionState();
-    })();
-  }, [chatroomId]);
+useEffect(() => {
+  const intervalId = setInterval(() => {
+    fetchMessages(); // Fetch messages at regular intervals
+  }, 1000); // Adjust the interval as needed (e.g., every 5 seconds)
+
+  return () => clearInterval(intervalId); // Clean up the interval on component unmount
+}, []);
   const fetchMentoringSessionState = async () => {
     try {
       const response = await axios.get(
@@ -66,7 +67,7 @@ const ChatPage = ({ route }) => {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.post(`${BASE_URL}/messages`, { chatroomId });
+      const response = await axios.post(`${BASE_URL}/messages`, {chatroomId});
       if (response.status === 200) {
         setMessages(response.data);
       } else {
@@ -126,11 +127,11 @@ const ChatPage = ({ route }) => {
   const scrollViewRef = useRef();
 
   const scrollToBottom = () => {
-    scrollViewRef.current.scrollToEnd({ animated: true });
+    scrollViewRef.current.scrollToEnd({animated: true});
   };
 
   const navigateToUserProfile = () => {
-    navigation.navigate('UserProfile', { userName });
+    navigation.navigate('UserProfile', {userName});
   };
 
   const handleDonePress = async () => {
@@ -275,7 +276,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
     padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
