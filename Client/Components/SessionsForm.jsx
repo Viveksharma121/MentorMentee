@@ -57,7 +57,6 @@ const SessionsForm = ({ navigation }) => {
 
     const createSession = async () => {
         try {
-            console.log()
             const response = await axios.post(`${BASE_URL}/session/add`, {
                 title,
                 description,

@@ -18,6 +18,11 @@ const ChatbotScreen = () => {
         ]);
     }, []);
 
+    const formatResponseText = (text) => {
+        // Remove asterisks from the text
+        return text.replace(/\*/g, "");
+    };
+
     const onSend = async (newMessages = []) => {
         const userMessage = newMessages[0];
 
@@ -27,30 +32,30 @@ const ChatbotScreen = () => {
             );
 
             const response = await axios.post(
-                "https://api.openai.com/v1/chat/completions",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCYlFT5Yd9PiKSGugKo5Ft8d72aV5TH4As",
                 {
-                    model: "gpt-3.5-turbo",
-                    messages: [{ role: "user", content: userMessage.text }],
-                    max_tokens: 150,
-                },
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer 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`,
-                    },
+                    "contents": [
+                        {
+                            "parts": [
+                                { "text": userMessage.text }
+                            ]
+                        }
+                    ]
                 }
             );
 
             const assistantResponse =
-                response.data.choices[0]?.message?.content ||
+                response.data.candidates[0]?.content?.parts[0]?.text ||
                 "Sorry, I didn't understand that.";
 
-            if (assistantResponse.trim() !== "") {
+            const formattedResponse = formatResponseText(assistantResponse);
+
+            if (formattedResponse.trim() !== "") {
                 setMessages((prevMessages) =>
                     GiftedChat.append(prevMessages, [
                         {
                             _id: Math.random().toString(36).substring(7),
-                            text: assistantResponse,
+                            text: formattedResponse,
                             createdAt: new Date(),
                             user: { _id: 2, name: "React Native" },
                         },
@@ -58,7 +63,7 @@ const ChatbotScreen = () => {
                 );
             }
         } catch (error) {
-            console.error("Error sending message to GPT-3:", error.message);
+            console.error("Error sending message to Gemini:", error.message);
         }
     };
 

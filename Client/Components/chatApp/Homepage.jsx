@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -75,7 +75,7 @@ const HomePage = () => {
 
     participants.forEach(participant => {
       const [mentor, mentee] = participant;
-      const roleEntry = {username: '', role: '', key: ''};
+      const roleEntry = { username: '', role: '', key: '' };
 
       if (mentor === loggedInUser) {
         roleEntry.username = mentee;
@@ -94,7 +94,7 @@ const HomePage = () => {
     return participantRoles;
   };
 
-  const renderChatroomItem = ({item, participantRoles}) => {
+  const renderChatroomItem = ({ item, participantRoles }) => {
     // role dhundho
     console.log(participantRoles);
     const participantRoleIndex = participantRoles.findIndex(entry => {
@@ -124,7 +124,7 @@ const HomePage = () => {
         }>
         <View style={styles.chatroomContent}>
           <Text style={styles.chatroomText}>
-            {`${item.otherUserName} (${role})`}
+            {`${item.otherUserName}`}
           </Text>
         </View>
       </TouchableOpacity>
@@ -136,12 +136,12 @@ const HomePage = () => {
       <Text style={styles.title}>Chats</Text>
       <FlatList
         data={chatrooms}
-        renderItem={({item}) => renderChatroomItem({item, participantRoles})}
+        renderItem={({ item }) => renderChatroomItem({ item, participantRoles })}
         keyExtractor={item => item.chatroomId}
       />
       <TouchableOpacity
         style={styles.searchButton}
-        onPress={() => navigation.navigate('Searchh', {myUserName: username})}>
+        onPress={() => navigation.navigate('Searchh', { myUserName: username })}>
         <Icon name="search" size={24} color="white" />
       </TouchableOpacity>
     </View>

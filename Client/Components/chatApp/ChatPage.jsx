@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
@@ -28,13 +29,25 @@ const ChatPage = ({ route }) => {
   const [isMentoringSessionActive, setIsMentoringSessionActive] =
     useState(false);
   const [receiver, setReceiver] = useState('');
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchData = async () => {
+        await fetchMessages();
+        await fetchParticipant(chatroomId);
+        await fetchMentoringSessionState();
+      };
+
+      fetchData();
+    }, [chatroomId])
+  );
+
   useEffect(() => {
-    (async () => {
-      await fetchMessages();
-      await fetchParticipant(chatroomId);
-      await fetchMentoringSessionState();
-    })();
-  }, [chatroomId]);
+    const intervalId = setInterval(() => {
+      fetchMessages(); // Fetch messages at regular intervals
+    }, 1000); // Adjust the interval as needed (e.g., every 5 seconds)
+
+    return () => clearInterval(intervalId); // Clean up the interval on component unmount
+  }, []);
   const fetchMentoringSessionState = async () => {
     try {
       const response = await axios.get(
@@ -156,7 +169,8 @@ const ChatPage = ({ route }) => {
 
   const handleTyping = text => {
     setMessage(text);
-    setIsTyping(!!text.trim()); // Update typing state based on whether input has content
+    setIsTyping(!!text.trim());
+    // Update typing state based on whether input has content
   };
 
   return (
