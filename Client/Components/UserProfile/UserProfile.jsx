@@ -112,11 +112,14 @@ const UserProfile = ({ route, navigation }) => {
 
     fetchUserData();
     getAllTweets();
+    //Myusername = shirissh
+    // username=vivek
   }, [BASE_URL, username]);
 
   const handleAskButtonPress = async () => {
     try {
       // Make a request to the backend to fetch the chatroomId
+
       const response = await axios.get(`${BASE_URL}/chatroomId`, {
         params: {
           participant1: username, // First participant
@@ -128,8 +131,8 @@ const UserProfile = ({ route, navigation }) => {
       console.log(chatroomId);
       // Assuming `Myusername` is the currently logged-in user's username
       navigation.navigate('ChatPage', {
-        userName: username,
-        myUserName: Myusername,
+        userName: username, //vivek  aka mentor
+        myUserName: Myusername, //shirish aka mentee
         chatroomId: chatroomId,
       });
     } catch (error) {

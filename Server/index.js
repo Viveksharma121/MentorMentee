@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 app.use(express.json());
 app.use(cors());
-
+const nodemailer = require('nodemailer');
 const session = require("express-session");
 //config/objects used in sessions
 const sessionConfig = {
@@ -21,10 +21,14 @@ const sessionConfig = {
     maxAge: 1000 * 60 * 60 * 24 * 7,
   },
 };
+const path = require('path');
+app.use(express.static(path.join(__dirname,"public")));
+
 //passport modules And User model
 const passport = require("passport");
 const LocalStragery = require("passport-local");
 const User = require("./model/User");
+const Session=require("./model/Session");
 const Notification = require("./model/Notification");
 //to use sessions
 app.use(session(sessionConfig));
@@ -80,6 +84,9 @@ app.get("/getAllUsers", async (req, res) => {
     res.json(error);
   }
 });
+
+
+
 
 let messages = [];
 
@@ -211,12 +218,14 @@ app.post("/search", async (req, res) => {
 // This will search a chatroom if it already exists, if not then creates a chatroom
 app.post("/chatroom", async (req, res) => {
   try {
-    const { userName, myUsername } = req.body;
+    const { userName, myUsername } = req.body; //mentor , mentee
     console.log(req.body);
     // Check if a chatroom already exists for the participants
     let existingChatroom = await Chatroom.findOne({
-      participants: { $all: [userName, myUsername] },
+      participants: [userName, myUsername],
     });
+
+    // console.log(existingChatroom + " exist");
     console.log(existingChatroom + "exist");
     if (!existingChatroom) {
       const chatroomId = uuidv4();
@@ -518,7 +527,7 @@ app.get("/notifications/:username", async (req, res) => {
   try {
     // Query the database to find notifications where the receiver is the provided username
     const notifications = await Notification.find({ receiver: username });
-
+    console.log(notifications);
     res.status(200).json(notifications);
   } catch (error) {
     console.error("Error fetching notifications:", error);
