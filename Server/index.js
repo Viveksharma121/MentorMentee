@@ -203,7 +203,7 @@ app.get("/users", async (req, res) => {
 
 app.post("/search", async (req, res) => {
   try {
-    const result = await User.findOne({ email: req.body.username });
+    const result = await User.findOne({ username: req.body.username });
     if (result) {
       res.status(200).send({ userName: result.username });
     } else {

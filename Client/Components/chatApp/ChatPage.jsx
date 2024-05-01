@@ -44,7 +44,7 @@ const ChatPage = ({ route }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       fetchMessages(); // Fetch messages at regular intervals
-    }, 1000); // Adjust the interval as needed (e.g., every 5 seconds)
+    }, 5000); // Adjust the interval as needed (e.g., every 5 seconds)
 
     return () => clearInterval(intervalId); // Clean up the interval on component unmount
   }, []);
