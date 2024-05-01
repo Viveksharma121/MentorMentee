@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, Button } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Button, Image } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
@@ -48,7 +48,6 @@ const SaveTweets = () => {
             // Filter out the deleted tweet from the savedTweets state
             const updatedTweets = savedTweets.filter(tweet => tweet.id !== tweetId);
             setSavedTweets(updatedTweets);
-
         } catch (error) {
             console.error('Failed to delete tweet:', error);
         }
@@ -69,6 +68,13 @@ const SaveTweets = () => {
                     <View style={styles.tweetContainer}>
                         <Text style={styles.username}>{item.user_name}</Text>
                         <Text style={styles.tweetContent}>{item.content}</Text>
+                        {item.image && item.image.length > 0 && (
+                            <Image
+                                source={{ uri: item.image[0] }} // Assuming the first image in the array
+                                style={styles.image}
+                                resizeMode="cover"
+                            />
+                        )}
                         <Button title="Delete" onPress={() => deleteSavedTweet(item.id)} />
                     </View>
                 )}
@@ -95,6 +101,11 @@ const styles = StyleSheet.create({
     },
     tweetContent: {
         fontSize: 16,
+    },
+    image: {
+        width: '100%', // Take full width of the container
+        height: 200, // Fixed height, adjust as needed
+        marginTop: 10, // Margin top for spacing
     },
 });
 
