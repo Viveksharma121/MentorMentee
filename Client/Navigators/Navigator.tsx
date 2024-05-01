@@ -80,28 +80,28 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ImageStyle} from 'react-native';
+import BuyItemsPage from '../Components/BuyItemsPage';
 import ChatGpt from '../Components/ChatGpt';
 import EditPost from '../Components/EditPost';
 import Login from '../Components/Login';
+import Notification from '../Components/Notification';
 import Profile from '../Components/Profile';
+import Rank from '../Components/Rank';
 import Register from '../Components/Register';
 import ResourceDetailScreen from '../Components/Resource/ResourceDetailScreen';
 import ResourceLibrary from '../Components/Resource/ResourceLibrary';
 import RoadmapComponent from '../Components/RoadMap';
 import SavedTweets from '../Components/SavedTweets';
 import ProjectForm from '../Components/Search/Searchpage';
+import Session from '../Components/Session';
+import SessionsDetail from '../Components/SessionDetail';
+import SessionsForm from '../Components/SessionsForm';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
 import UserProfile from '../Components/UserProfile/UserProfile';
 import ChatPage from '../Components/chatApp/ChatPage';
 import HomePage from '../Components/chatApp/Homepage';
 import SearchPage from '../Components/chatApp/SearchPage';
-import BuyItemsPage from '../Components/BuyItemsPage';
-import Notification from '../Components/Notification';
-import Rank from '../Components/Rank'
-import SessionsForm from '../Components/SessionsForm'
-import Session from '../Components/Session';
-import SessionsDetail from '../Components/SessionDetail';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -168,20 +168,20 @@ const AppNavigator = () => {
         component={SearchPage}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="ChatPage"
         component={ChatPage}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="BuyItemsPage"
         component={BuyItemsPage}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="Notification"
         component={Notification}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="SkillsForm"
@@ -198,7 +198,7 @@ const AppNavigator = () => {
         component={Session}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="SessionsForm"
         component={SessionsForm}
         options={{headerShown: false}}
@@ -275,32 +275,32 @@ const AppNavigator2 = () => {
         component={SearchPage}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="ChatPage"
         component={ChatPage}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="BuyItemsPage"
         component={BuyItemsPage}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="Notification"
         component={Notification}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="SkillsForm"
         component={SkillsForm}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="Rank"
         component={Rank}
         options={{headerShown: false}}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="Session"
         component={Session}
         options={{headerShown: false}}
@@ -362,8 +362,7 @@ const MainTabNavigator = () => {
       <Tab.Screen name="Workshop" component={Session} />
       <Tab.Screen name="Resource" component={ResourceLibrary} />
       <Tab.Screen name="Profile" component={Profile} />
-      
-      
+
       {/* <Tab.Screen name="ChatGpt" component={ChatGpt} /> */}
     </Tab.Navigator>
   );
