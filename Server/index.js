@@ -697,6 +697,7 @@ app.delete('/sessions/:sessionId', async (req, res) => {
   const { sessionId } = req.params;
   try {
       const session = await Session.findByIdAndDelete(sessionId);
+      console.log("deleled Session ",session)
       if (!session) {
           return res.status(404).json({ message: 'Session not found' });
       }
