@@ -14,9 +14,11 @@ module.exports.register = async (req, res) => {
     //where it has a function called register(variable,password) which
     //saves the user in the db
     const registeredUser = await User.register(user, password);
+    const set_user = await StudentModel({ name: username });
     console.log("====================================");
     console.log(registeredUser);
     console.log("====================================");
+    const savedStudent = await set_user.save();
     //abb user jab register karta he should be able to use features
     //par it asking for login
     //therefore theres a methoad called "req.login" which login in the user in the session

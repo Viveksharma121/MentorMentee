@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useState} from 'react';
 
 import {
   ScrollView,
@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import Config from 'react-native-config';
-import { Avatar, Card, IconButton, Subheading, Title } from 'react-native-paper';
+import {Avatar, Card, IconButton, Subheading, Title} from 'react-native-paper';
 const ProfilePage = () => {
   const navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
@@ -100,13 +100,16 @@ const ProfilePage = () => {
             label={userDetails.username[0].toUpperCase()}
             style={styles.avatar}
           />
-          <IconButton
-            icon="cart"
-            color="#000"
-            size={24}
-            onPress={() => navigation.navigate('BuyItemsPage')}
-            style={styles.logoutButton}
-          />
+          <View style={styles.logoutButton}>
+            <IconButton
+              icon="cart"
+              color="#000"
+              size={24}
+              onPress={() => navigation.navigate('BuyItemsPage')}
+            />
+            <Text style={{fontWeight: '900'}}>Pts:{userDetails.credits} </Text>
+          </View>
+
           <Title style={styles.username}>{userDetails.username}</Title>
           <Subheading style={styles.email}>
             Email: {userDetails.email}

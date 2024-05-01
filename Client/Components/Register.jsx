@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import Config from 'react-native-config';
+
 export default function Register() {
   const BASE_URL = Config.BASE_URL;
   const navigation = useNavigation();
@@ -41,6 +42,10 @@ export default function Register() {
       console.error('Registration error:', error);
       // Handle other errors as needed
     }
+  };
+
+  const handleLoginNavigation = () => {
+    navigation.navigate('Login');
   };
 
   return (
@@ -76,7 +81,9 @@ export default function Register() {
         <Text style={styles.registerText}>REGISTER</Text>
       </TouchableOpacity>
       <View style={styles.actions}>
-        <TouchableOpacity style={{marginHorizontal: 15}}>
+        <TouchableOpacity
+          style={{marginHorizontal: 15}}
+          onPress={handleLoginNavigation}>
           <Text>Already have an account? Login</Text>
         </TouchableOpacity>
       </View>

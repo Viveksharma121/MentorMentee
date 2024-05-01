@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useEffect, useState} from 'react';
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Config from 'react-native-config';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -11,9 +11,9 @@ const HomePage = () => {
   const [username, setUserName] = useState('');
   const navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
-  const [chatroomsData, setChatroomsData] = useState([]);
   const [chatrooms, setChatrooms] = useState([]);
-  const [participants, setparticipants] = useState([]);
+  const [participantRoles, setParticipantRoles] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,21 +39,14 @@ const HomePage = () => {
       fetchAllChat();
     }
   }, [username]);
-  const [participantRoles, setParticipantRoles] = useState([]);
 
   const fetchAllChat = async () => {
     try {
-      // console.log('sending username', username);
       const response = await axios.get(
         `${BASE_URL}/api/chat/allchatrooms?username=${username}`,
       );
-      // console.log('all chatrooms');
       const participants = response.data.map(chatroom => chatroom.participants);
-      console.log(participants);
-      setparticipants(participants);
-      const participantRoles = generateParticipantRoles(participants, username);
-      console.log(JSON.stringify(participantRoles) + ' i am generated lolll');
-      setParticipantRoles(participantRoles);
+      setParticipantRoles(generateParticipantRoles(participants, username));
     } catch (error) {
       console.error('Error fetching chatrooms:', error);
     }
@@ -70,12 +63,12 @@ const HomePage = () => {
       console.error('Error fetching chatrooms:', error);
     }
   };
+
   const generateParticipantRoles = (participants, loggedInUser) => {
     const participantRoles = [];
-
     participants.forEach(participant => {
       const [mentor, mentee] = participant;
-      const roleEntry = {username: '', role: '', key: ''};
+      const roleEntry = { username: '', role: '', key: '' };
 
       if (mentor === loggedInUser) {
         roleEntry.username = mentee;
@@ -85,31 +78,18 @@ const HomePage = () => {
         roleEntry.role = 'Mentor';
       }
 
-      // unique key uniqueness ke liye banaya tha but not in use tbh
       roleEntry.key = roleEntry.username + '_' + roleEntry.role;
-
       participantRoles.push(roleEntry);
     });
 
     return participantRoles;
   };
 
-  const renderChatroomItem = ({item, participantRoles}) => {
-    // role dhundho
-    console.log(participantRoles);
-    const participantRoleIndex = participantRoles.findIndex(entry => {
-      console.log(entry.username + ' entry');
-      console.log(item.otherUserName + ' exit');
-      return entry.username === item.otherUserName;
-    });
-
-    console.log(participantRoleIndex + ' iddhbhc');
+  const renderChatroomItem = ({ item }) => {
+    const participantRoleIndex = participantRoles.findIndex(entry => entry.username === item.otherUserName);
     let role = '';
     if (participantRoleIndex !== -1) {
       role = participantRoles[participantRoleIndex].role;
-      console.log(role + ' rolaa role');
-      // jiska hua usko objecet se delete
-      participantRoles.splice(participantRoleIndex, 1);
     }
 
     return (
@@ -136,12 +116,12 @@ const HomePage = () => {
       <Text style={styles.title}>Chats</Text>
       <FlatList
         data={chatrooms}
-        renderItem={({item}) => renderChatroomItem({item, participantRoles})}
+        renderItem={renderChatroomItem}
         keyExtractor={item => item.chatroomId}
       />
       <TouchableOpacity
         style={styles.searchButton}
-        onPress={() => navigation.navigate('Searchh', {myUserName: username})}>
+        onPress={() => navigation.navigate('Searchh', { myUserName: username })}>
         <Icon name="search" size={24} color="white" />
       </TouchableOpacity>
     </View>

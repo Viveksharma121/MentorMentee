@@ -338,6 +338,10 @@ const MainTabNavigator = () => {
             iconName = focused
               ? require('../assets/chatbot.png') // Image for active state
               : require('../assets/chatbot.png'); // Image for inactive state
+          }  else if (route.name === 'Workshop') {
+            iconName = focused
+              ? require('../assets/workshop.png') // Image for active state
+              : require('../assets/workshop.png'); // Image for inactive state
           } else if (route.name === 'Profile') {
             iconName = focused
               ? require('../assets/profile.png') // Image for active state
@@ -346,7 +350,7 @@ const MainTabNavigator = () => {
             iconName = focused
               ? require('../assets/book.jpg') // Image for active state
               : require('../assets/book.jpg'); // Image for inactive state
-          }
+          } 
 
           // Add outline style if focused
           if (focused) {

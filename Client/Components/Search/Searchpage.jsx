@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, TextInput, TouchableOpacity, View, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+
 import Config from 'react-native-config';
 import MentorCard from './MentorCard'; // Import MentorCard component
-
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 const SearchPage = () => {
   const BASE_URL = Config.BASE_URL;
   const [query, setQuery] = useState('');
@@ -27,6 +27,12 @@ const SearchPage = () => {
   useEffect(() => {
     getAllUsers();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getAllUsers();
+    }, [])
+  );
 
   // Function to filter users based on query
   const filterUsers = () => {

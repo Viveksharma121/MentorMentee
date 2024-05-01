@@ -118,26 +118,22 @@ const UserProfile = ({ route, navigation }) => {
 
   const handleAskButtonPress = async () => {
     try {
-      // Make a request to the backend to fetch the chatroomId
-
-      const response = await axios.get(`${BASE_URL}/chatroomId`, {
-        params: {
-          participant1: username, // First participant
-          participant2: Myusername, // Second participant
-        },
+      const response = await axios.post(`${Config.BASE_URL}/chatroom`, {
+        userName: username,
+        myUsername: Myusername,
       });
-
-      const { chatroomId } = response.data;
-      console.log(chatroomId);
-      // Assuming `Myusername` is the currently logged-in user's username
-      navigation.navigate('ChatPage', {
-        userName: username, //vivek  aka mentor
-        myUserName: Myusername, //shirish aka mentee
-        chatroomId: chatroomId,
-      });
+      console.log("Chatrrom Between ", response);
+      if (response.status === 200) {
+        navigation.navigate('Chat', {
+          chatroomId: response.data.chatroomId,
+          userName: username,
+          myUserName: Myusername,
+        });
+      } else {
+        console.error('Unexpected response status:', response.status);
+      }
     } catch (error) {
-      console.error('Error fetching chatroomId:', error);
-      // Handle error appropriately
+      Alert.alert('Error', 'Failed to create or find a chatroom.');
     }
   };
 
