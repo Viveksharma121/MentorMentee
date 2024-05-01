@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 import base64 from 'base-64';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Button,
   FlatList,
@@ -20,6 +20,7 @@ import AddResourceForm from './AddResourceForm';
 
 const ResourceLibrary = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const [creditpoints, setcreditpoints] = useState(0);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -35,7 +36,7 @@ const ResourceLibrary = () => {
   const [showAddResourceModal, setShowAddResourceModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [username, setusername] = useState('');
-  const [creditpoints, setcreditpoints] = useState(0);
+
   const getName = async () => {
     try {
       const token = await AsyncStorage.getItem('token');
@@ -51,7 +52,7 @@ const ResourceLibrary = () => {
       console.log('currrr', currentUser);
       setusername(currentUser);
       getPoints(currentUser);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -59,7 +60,14 @@ const ResourceLibrary = () => {
     fetchResources();
   }, []);
 
-  const getPoints = async username => {
+  // Use useFocusEffect to fetch points whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      getName();
+    }, [])
+  );
+
+  const getPoints = async (username) => {
     try {
       const response = await axios.get(`${BASE_URL}/user/${username}`);
       console.log(response.data.credits);
@@ -91,13 +99,13 @@ const ResourceLibrary = () => {
   };
 
   const navigateToDetailScreen = item => {
-    navigation.navigate('ResourceDetail', {resource: item});
+    navigation.navigate('ResourceDetail', { resource: item });
   };
 
   const handleSearch = () => {
     axios
       .get(`${BASE_URL}/api/resource/searchResources`, {
-        params: {query: searchQuery},
+        params: { query: searchQuery },
       })
       .then(response => {
         setResources(response.data);
@@ -112,7 +120,7 @@ const ResourceLibrary = () => {
     fetchResources(); // Reset to the default list when search is cleared
   };
 
-  const renderItem = ({item}) => (
+  const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.resourceContainer}
       onPress={() => navigateToDetailScreen(item)}>
