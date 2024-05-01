@@ -414,6 +414,9 @@ app.post("/update-credits", async (req, res) => {
       case "resourceAdd":
         creditsToAdd = -250;
         break;
+      case "sessionAdd":
+        creditsToAdd = -100;
+        break;
       case "Rating":
         // Adjust the conversion from rating to credits as per your requirement
         // This is just an example, adjust it based on your business logic

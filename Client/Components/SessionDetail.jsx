@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, FlatList, Alert, Linking, Image } from 'react-native';
+import { View, Text, Button, StyleSheet, FlatList, Alert, Linking, Image, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -81,51 +81,57 @@ const SessionDetailScreen = ({ route }) => {
     if (!sessionDetails) return <View style={styles.container}><Text>Loading...</Text></View>;
 
     return (
-        <View style={styles.container}>
-            {sessionDetails.image && (
-                <Image
-                    source={{ uri: sessionDetails.image }}
-                    style={styles.image}
-                />
-            )}
-            <Text style={styles.title}>{sessionDetails.title}</Text>
-            <Text style={styles.subtitle}>Description:</Text>
-            <Text style={styles.text}>{sessionDetails.description}</Text>
-            <Text style={styles.subtitle}>Category:</Text>
-            <Text style={styles.text}>{sessionDetails.category}</Text>
-            <Text style={styles.subtitle}>Meeting Link:</Text>
-            <Text style={[styles.text, styles.link]} onPress={handleMeetingLinkPress}>{sessionDetails.meetingLink}</Text>
-            <Text style={styles.subtitle}>Meeting Date:</Text>
-            <Text style={styles.text}>{sessionDetails.meetingDate}</Text>
-            <Text style={styles.subtitle}>Capacity:</Text>
-            <Text style={styles.text}>{sessionDetails.capacity}</Text>
-            {isCreator && (
-                <>
-                    <Text style={styles.subtitle}>Enrolled Students:</Text>
-                    <FlatList
-                        data={sessionDetails.enrolledStudents}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => (
-                            <View style={styles.enrolledStudent}>
-                                <Text style={styles.enrolledStudentText}>{item.username}</Text>
-                                <Text style={styles.enrolledStudentText}>{item.email}</Text>
-                            </View>
-                        )}
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.container}>
+                {sessionDetails.image && (
+                    <Image
+                        source={{ uri: sessionDetails.image }}
+                        style={styles.image}
                     />
-                </>
-            )}
-            {!isEnrolled && !isCreator && (
-                <Button title="Enroll" onPress={enrollInSession} />
-            )}
-            {isEnrolled && <Text style={styles.enrolledText}>You are already enrolled in this session.</Text>}
-            {isCreator && (
-                <Button title="Delete Session" onPress={deleteSession} />
-            )}
-        </View>
+                )}
+                <Text style={styles.title}>{sessionDetails.title}</Text>
+                <Text style={styles.subtitle}>Description:</Text>
+                <Text style={styles.text}>{sessionDetails.description}</Text>
+                <Text style={styles.subtitle}>Category:</Text>
+                <Text style={styles.text}>{sessionDetails.category}</Text>
+                <Text style={styles.subtitle}>Meeting Link:</Text>
+                <Text style={[styles.text, styles.link]} onPress={handleMeetingLinkPress}>{sessionDetails.meetingLink}</Text>
+                <Text style={styles.subtitle}>Meeting Date:</Text>
+                <Text style={styles.text}>{sessionDetails.meetingDate}</Text>
+                <Text style={styles.subtitle}>Capacity:</Text>
+                <Text style={styles.text}>{sessionDetails.capacity}</Text>
+                {isCreator && (
+                    <>
+                        <Text style={styles.subtitle}>Enrolled Students:</Text>
+                        <FlatList
+                            data={sessionDetails.enrolledStudents}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <View style={styles.enrolledStudent}>
+                                    <Text style={styles.enrolledStudentText}>{item.username}</Text>
+                                    <Text style={styles.enrolledStudentText}>{item.email}</Text>
+                                </View>
+                            )}
+                        />
+                    </>
+                )}
+                {!isEnrolled && !isCreator && (
+                    <Button title="Enroll" onPress={enrollInSession} />
+                )}
+                {isEnrolled && <Text style={styles.enrolledText}>You are already enrolled in this session.</Text>}
+                {isCreator && (
+                    <Button title="Delete Session" onPress={deleteSession} />
+                )}
+            </View>
+        </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
+    scrollContainer: {
+        flexGrow: 1,
+        backgroundColor: '#f0f0f0',
+    },
     container: {
         flex: 1,
         padding: 20,
@@ -134,7 +140,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 20,
         color: '#333',
         textAlign: 'center',
     },
@@ -176,4 +182,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default SessionDetailScreen
+export default SessionDetailScreen;
