@@ -23,6 +23,17 @@ const db = async () => {
   }
 };
 
+const commentSchema = new mongoose.Schema({
+  user_name: {
+    type: String,
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+});
+
 const tweetSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -35,6 +46,10 @@ const tweetSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true,
+  },
+  image: { // Updated field
+    type: [String],
+    default: [],
   },
   likes: {
     type: Number,
@@ -52,6 +67,8 @@ const tweetSchema = new mongoose.Schema({
       },
     },
   ],
+  comments: [commentSchema],
+  savedBy: [{ userId: String, _id: mongoose.Schema.Types.ObjectId }],
 });
 
 const Tweet = mongoose.model("Tweet", tweetSchema);

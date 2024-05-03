@@ -1,329 +1,720 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import React, {useEffect, useState} from 'react';
-import {
-  FlatList,
-  ListRenderItemInfo,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import base64 from 'base-64';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View, Image } from 'react-native';
 import Config from 'react-native-config';
-import {Button, IconButton, Modal, Portal, TextInput} from 'react-native-paper';
+import { Button, IconButton, Modal, Portal, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
+// import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker'; // Import ImagePickerResponse
+import ImagePicker from 'react-native-image-crop-picker';
+import Carousel from 'react-native-snap-carousel';
+import { Share } from 'react-native';
+
 
 const Threads = () => {
+  const Navigation = useNavigation();
   const BASE_URL = Config.BASE_URL;
   const [posts, setPosts] = useState<any[]>([]);
+  const [username, setUsername] = useState<string>('');
+  const [newComment, setNewComment] = useState<string>('');
+  const [activePostId, setActivePostId] = useState<number | null>(null);
+  const [commentModalVisible, setCommentModalVisible] =
+    useState<boolean>(false);
+  const [commentsVisible, setCommentsVisible] = useState<boolean>(false);
+  const [visibleComments, setVisibleComments] = useState<{
+    [postId: number]: boolean;
+  }>({});
+  const [notificationCount, setNotificationCount] = useState<number>(0);
+
+  // Function to fetch posts
   async function fetchPosts() {
     try {
-      console.log('fetch post called');
       const response = await axios.get(`${BASE_URL}/api/thread`);
-      console.log('after response');
-      console.log(response);
       if (!response.data) {
         throw new Error('Error fetching public posts');
       }
-
       const data: any = response.data;
-
-      // console.log('fetched');
       const sortedData = data.sort((a: any, b: any) => {
         const dateA = new Date(a?.created_at ?? '');
         const dateB = new Date(b?.created_at ?? '');
         return dateB.getTime() - dateA.getTime();
       });
-
       setPosts(sortedData);
-      // console.log(sortedData);
     } catch (error) {
       console.log(JSON.stringify(error));
     }
   }
 
-  // const fetchPosts = async () => {
-  //   console.log('fetch post called without code');
+  //fetch notification count
 
-  // };
+  
 
+  const toggleComments = (postId: number) => {
+    setVisibleComments((prevState) => ({
+      ...prevState,
+      [postId]: !prevState[postId], // Toggle visibility
+    }));
+  };
+
+  // Function to get token and decode username
+  const userName = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('Token not found');
+      }
+      const [, payload] = token.split('.');
+      const decodedPayload = base64.decode(payload);
+      const payloadObject = JSON.parse(decodedPayload);
+      setUsername(payloadObject.username.toString());
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  };
+  const fetchNotifications = async () => {
+    try {
+      console.log(username + 'fetch noti ka username');
+      const response = await axios.get(`${BASE_URL}/notifications/${username}`);
+      if (response.status === 200) {
+        setNotificationCount(response.data.length);
+        console.log(response.data.length);
+      } else {
+        console.error('Error:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      userName();
+      fetchPosts();
+      fetchNotifications();
+    }, [])
+  );
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    fetchNotifications();
+  }, [username]);
 
   const [isModalVisible, setModalVisible] = useState(false);
-  const [newPost, setNewPost] = useState({user_name: '', content: ''});
+  const [newPost, setNewPost] = useState({
+    user_name: '',
+    content: '',
+    image: undefined, // Initialize image as undefined
+  }); // Add 'image' state
+  const [savedPosts, setSavedPosts] = useState([]);
+
+  const fetchSavedPosts = async () => {
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/api/thread/${username}/saved-tweets`
+      );
+      console.log('neeche saved hai');
+      console.log(response.data);
+      setSavedPosts(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+    setNewPost({ user_name: username, content: '', image: null }); // Reset 'image' state
   };
 
-  const handleInputChange = (field: any, value: any) => {
-    setNewPost({...newPost, [field]: value});
+  const handleInputChange = (field: string, value: string) => {
+    setNewPost({ ...newPost, [field]: value });
   };
-  //   useEffect(() => {
-  //     // Fetch posts from the backend when the component mounts
-  //     fetchPosts();
-  //   }, []);
 
-  //   const fetchPosts = async () => {
-  //     try {
-  //       const response = await fetch('http://your-backend-url/getPosts');
-  //       const data = await response.json();
-  //       setPosts(data);
-  //     } catch (error) {
-  //       console.error('Error fetching posts:', error);
-  //     }
-  //   };
+  // Function to handle image upload
+  const handleImageUpload = () => {
+    ImagePicker.openPicker({
+      multiple: true, // Set multiple option to true for selecting multiple images
+      mediaType: 'photo',
+    }).then(images => {
+      // 'images' will contain an array of selected images
+      const imageUris = images.map(image => image.path); // Extract URIs from selected images
+      console.log("Selected images URIs:", imageUris);
+      setNewPost({ ...newPost, image: imageUris }); // Set the array of image URIs in 'newPost' state
+    }).catch(error => {
+      console.log('Image picker error:', error);
+    });
+  };
+
+
+  const handleLogout = async () => {
+    try {
+      console.log(AsyncStorage);
+      await AsyncStorage.removeItem('token');
+      console.log('====================================');
+      console.log('after logout');
+      console.log('====================================');
+      console.log(AsyncStorage);
+      Navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error clearing token:', error);
+    }
+  };
 
   const handleAddPost = async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-
-      // Make request to protected endpoint with token in headers
-      const userdata = await axios.get(`${BASE_URL}/user/currentUser`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log(userdata);
-      if (!userdata) {
-        throw new Error('Error fetching current user information');
-      }
-      // console.log(newPost);
-      // const response = await fetch(`${BASE_URL}/api/thread/threads`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(newPost),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      // }
-
-      // const data = await response.json();
-      // console.log(data);
-      // console.log(newPost);
-      // setPosts([...posts, data]);
-      // console.log('after adding');
+      console.log("new post ",newPost);
+      const newPostWithUsername = { ...newPost, user_name: username };
+      const response = await axios.post(
+        `${BASE_URL}/api/thread/threads`,
+        newPostWithUsername
+      );
+      setPosts([...posts, response.data]);
       fetchPosts();
       toggleModal();
     } catch (error) {
       console.error('Error adding post:', error);
     }
   };
-  const renderItem = ({item}: ListRenderItemInfo<any>) => (
+
+  const handleLike = async (postId: any) => {
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/api/thread/threads/${postId}/like`,
+        { userId: username }
+      );
+
+      if (response.status === 200) {
+        // Call the API to update credits when a user likes a post
+        const credituser = await axios.get(`${BASE_URL}/credits/${postId}`);
+
+        const credituserdata = credituser.data[0].user_name;
+
+        console.log('credit data  ', credituserdata);
+        // console.log("credit username ",credituser.data.user_name);
+        // Call the API to update credits when a user adds a comment
+
+        const creditsResponse = await axios.post(`${BASE_URL}/update-credits`, {
+          username: credituserdata,
+          actionType: 'comment',
+        });
+
+        if (creditsResponse.data.success) {
+          // Refresh posts to reflect the new like status
+          fetchPosts();
+        } else {
+          console.error(
+            'Failed to update credits:',
+            creditsResponse.data.message
+          );
+        }
+      }
+    }
+    catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
+
+  const saveTweet = async (postId: number) => {
+    try {
+      await axios.post(`${BASE_URL}/api/thread/save-tweet`, {
+        user_name: username,
+        content: posts.find((post) => post.id === postId)?.content,
+      });
+      fetchPosts();
+      fetchSavedPosts();
+    } catch (error) {
+      console.error('Error saving tweet:', error);
+    }
+  };
+  const addComment = async (postId: number) => {
+    try {
+      await axios.post(`${BASE_URL}/api/thread/threads/${postId}/comments`, {
+        user_name: username,
+        content: newComment,
+      });
+
+      const credituser = await axios.get(`${BASE_URL}/credits/${postId}`);
+
+      const credituserdata = credituser.data[0].user_name;
+
+      console.log('credit data  ', credituserdata);
+      // console.log("credit username ",credituser.data.user_name);
+      // Call the API to update credits when a user adds a comment
+      const creditsResponse = await axios.post(`${BASE_URL}/update-credits`, {
+        username: credituserdata,
+        actionType: 'comment',
+      });
+
+      if (creditsResponse.data.success) {
+        setNewComment('');
+        setActivePostId(null);
+        setCommentModalVisible(false);
+        fetchPosts();
+      } else {
+        console.error(
+          'Failed to update credits:',
+          creditsResponse.data.message
+        );
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
+  };
+
+  const closeCommentBox = () => {
+    setActivePostId(null);
+    setCommentModalVisible(false);
+    setNewComment('');
+  };
+  const handleEditPost = async (postId: number) => {
+    try {
+      const post = posts.find((post) => post.id === postId);
+
+      // Check if the logged-in user is the author of the post
+      if (post.user_name === username) {
+        // Open a modal or navigate to another screen for editing
+        // Set the post details in the state or context to be used in the edit form
+
+        // Example using React Navigation
+        Navigation.navigate('EditPost', { postToEdit: post });
+      } else {
+        console.log("You don't have permission to edit this post.");
+      }
+    } catch (error) {
+      console.error('Error fetching post for editing:', error);
+    }
+  };
+  const handleDeletePost = async (postId: number) => {
+    try {
+      const post = posts.find((post) => post.id === postId);
+
+      // Check if the logged-in user is the author of the post
+      if (post.user_name === username) {
+        const response = await axios.delete(
+          `${BASE_URL}/api/thread/threads/${postId}`
+        );
+        if (response.status === 204) {
+          // Post deleted successfully, update the posts state
+          setPosts(posts.filter((post) => post.id !== postId));
+        }
+      } else {
+        console.log("You don't have permission to delete this post.");
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+  const renderCarouselItem = ({ item }: { item: any }) => (
+    <View style={styles.carouselItem}>
+      <Image source={{ uri: item }} style={styles.image} />
+    </View>
+  );
+
+  // Go to the next image in the carousel
+  const goToNextImage = () => {
+    if (carouselRef.current) {
+      carouselRef.current.snapToNext();
+    }
+  };
+
+  // Go to the previous image in the carousel
+  const goToPrevImage = () => {
+    if (carouselRef.current) {
+      carouselRef.current.snapToPrev();
+    }
+  }; 
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.postContainer}>
       <View style={styles.postHeader}>
-        <Text style={styles.postTitle}>{item.user_name}</Text>
+        <Pressable
+          onPress={() =>
+            Navigation.navigate('UserProfile', { userName: item.user_name })
+          }>
+          <Text style={styles.postTitle}>{item.user_name}</Text>
+        </Pressable>
       </View>
       <Text style={styles.postContent}>{item.content}</Text>
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+      {/* Carousel */}
+      <Carousel
+        data={item.image}
+        renderItem={({ item: imagePath }: { item: string }) => (
+          <Image source={{ uri: imagePath }} style={styles.postImage} />
+        )}
+        sliderWidth={300}
+        itemWidth={300}
+      />
+      {/* Rest of the content */}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <IconButton
           icon={() => (
             <Icon
               name={item.liked ? 'heart' : 'heart-o'}
               size={24}
-              color={item.liked ? '#FF69B4' : '#000000'}
+              color={item.liked ? '#FF69B4' : '#000'}
             />
           )}
           onPress={() => handleLike(item.id)}
         />
         <Text>{item.likes}</Text>
+        <IconButton
+          icon={() => (
+            <Icon
+              name={commentsVisible ? 'comment' : 'comment-o'}
+              size={24}
+              color="#000"
+            />
+          )}
+          onPress={() => toggleComments(item.id)}
+        />
+        <IconButton
+          icon={() => (
+            <Icon
+              name={
+                savedPosts.some((savedPost) => savedPost.id === item.id)
+                  ? 'bookmark'
+                  : 'bookmark-o'
+              }
+              size={24}
+              color={
+                savedPosts.some((savedPost) => savedPost.id === item.id)
+                  ? '#111111'
+                  : '#000'
+              }
+            />
+          )}
+          onPress={() => saveTweet(item.id)}
+        />
+        {/* Share Button */}
+        <IconButton
+          icon={() => <Icon name="share" size={24} color="#000" />}
+          onPress={() => sharePost(item)}
+        />
+        {item.user_name === username && (
+          <>
+            <IconButton
+              icon={() => <Icon name="edit" size={24} color="#000" />}
+              onPress={() => handleEditPost(item.id)}
+            />
+            <IconButton
+              icon={() => <Icon name="trash" size={24} color="#FF0000" />}
+              onPress={() => handleDeletePost(item.id)}
+            />
+          </>
+        )}
       </View>
-    </View>
-  );
-
-  const handleLike = async (postId: any) => {
-    try {
-      const updatedPosts = posts.map(post => {
-        if (post.id === postId) {
-          const liked = !post.liked;
-          return {...post, liked};
-        }
-        return post;
-      });
-      setPosts(updatedPosts);
-
-      console.log('post id is ', postId);
-
-      const response = await fetch(
-        `${BASE_URL}/api/thread/threads/${postId}/like`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({userId: 'user1'}),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      } else {
-        fetchPosts();
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <Pressable style={styles.addButton} onPress={toggleModal}>
-        <Text style={styles.addButtonText}>+</Text>
-      </Pressable>
-
-      <FlatList
-        data={posts}
-        keyExtractor={item => item._id}
-        renderItem={renderItem}
-      />
-
-      <Portal>
-        <Modal
-          visible={isModalVisible}
-          onDismiss={toggleModal}
-          contentContainerStyle={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Add New Post</Text>
+      {visibleComments[item.id] &&
+        item.comments &&
+        item.comments.length > 0 ? (
+          <View style={styles.commentsContainer}>
+            <Text style={styles.commentsTitle}>Comments:</Text>
+            <FlatList
+              data={item.comments}
+              keyExtractor={(comment, index) =>
+                (comment?.id ?? index).toString()
+              }
+              renderItem={({ item: comment }) => (
+                <View style={styles.commentContainer}>
+                  <Pressable
+                    onPress={() =>
+                      Navigation.navigate('UserProfile', {
+                        userName: comment.user_name,
+                      })
+                    }>
+                    <Text style={styles.commentAuthor}>
+                      {comment.user_name}:
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.commentContent}>
+                    {comment.content}
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
+        ) : visibleComments[item.id] &&
+        item.comments.length < 1 ? (
+          <Text>No comments yet</Text>
+        ) : null}
+      {activePostId === item.id && (
+        <View style={styles.commentInputContainer}>
           <TextInput
-            style={styles.modalInputTitle}
-            placeholder="Title"
-            value={newPost.user_name}
-            onChangeText={text => handleInputChange('user_name', text)}
-          />
-          <TextInput
-            style={styles.modalInputContent}
-            placeholder="Content"
-            multiline={true}
-            numberOfLines={8}
-            value={newPost.content}
-            onChangeText={text => handleInputChange('content', text)}
+            style={styles.commentInput}
+            value={newComment}
+            onChangeText={setNewComment}
+            placeholder="Write a comment..."
           />
           <Button
             mode="contained"
-            onPress={handleAddPost}
-            style={styles.submitButton}>
+            onPress={() => addComment(item.id)}
+            style={styles.commentSubmitButton}>
             Submit
           </Button>
-          <Button
-            mode="outlined"
-            onPress={toggleModal}
-            style={styles.cancelButton}>
-            Cancel
-          </Button>
-        </Modal>
-      </Portal>
+          <IconButton
+            icon="close"
+            size={24}
+            color="#000"
+            onPress={closeCommentBox}
+          />
+        </View>
+      )}
+      {visibleComments[item.id] && (
+        <Button
+          mode="contained"
+          onPress={() => setActivePostId(item.id)}
+          style={styles.commentButton}>
+          Comment
+        </Button>
+      )}
     </View>
   );
-};
+  
+    // Function to share a post
+    const sharePost = async (post: any) => {
+      try {
+        const shareOptions = {
+          message: `Check out this post by ${post.user_name}: ${post.content}`, // Message to be shared
+        };
+        await Share.share(shareOptions);
+      } catch (error) {
+        console.error('Error sharing post:', error);
+      }
+    };
+  
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <IconButton
+                icon="bell"
+                onPress={() => Navigation.navigate('Notification')}
+                style={{ marginRight: 0 }}
+              />
+              {notificationCount > 0 && (
+                <Text
+                  style={{
+                    backgroundColor: '#3B3B3B',
+                    borderRadius: 10,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    fontSize: 12,
+                    color: 'white',
+                    fontWeight: 'bold',
+                  }}>
+                  {notificationCount}
+                </Text>
+              )}
+              <IconButton
+                icon="chat"
+                onPress={() => Navigation.navigate('Home')}
+                style={{ marginHorizontal: 20 }}
+              />
+              <IconButton
+                icon={() => <Text style={{ fontSize: 24 }}>⭐</Text>} // Unicode character for a star
+                onPress={() => Navigation.navigate('Rank')}
+                style={{ marginHorizontal: 16 }}
+              />
+              <IconButton
+                icon="map"
+                onPress={() => Navigation.navigate('RoadMap')}
+                style={{ marginHorizontal: 12 }}
+              />
+            </View>
+            <IconButton
+              icon="logout"
+              color="#000"
+              size={24}
+              onPress={handleLogout}
+              style={{ marginHorizontal: 30 }}
+            />
+          </View>
+        </View>
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item._id.toString()}
+          renderItem={renderItem}
+        />
+        <Pressable style={styles.addButton} onPress={toggleModal}>
+          <Text style={styles.addButtonText}>+</Text>
+        </Pressable>
+        <Portal>
+          <Modal
+            visible={isModalVisible}
+            onDismiss={toggleModal}
+            contentContainerStyle={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>New Post</Text>
+              <IconButton
+                icon="close"
+                size={24}
+                color="#000"
+                onPress={toggleModal}
+              />
+            </View>
+            <TextInput
+              label="Post Content"
+              value={newPost.content}
+              onChangeText={(text) => handleInputChange('content', text)}
+              multiline
+              style={styles.modalTextInput}
+            />
+            {/* Image Upload Button */}
+            <Button
+              mode="contained"
+              onPress={handleImageUpload} // Call handleImageUpload function
+              style={styles.modalButton}>
+              Upload Image
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleAddPost}
+              style={styles.modalButton}>
+              Post
+            </Button>
+          </Modal>
+        </Portal>
+      </View>
+    );
+  };
+  
+
+  
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f9f9f9',
   },
   postContainer: {
     marginBottom: 16,
-    backgroundColor: '#fffff',
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    elevation: 6,
     padding: 16,
-    borderRadius: 6,
-    elevation: 4,
   },
   postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   postTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
-  },
-  postAuthor: {
-    fontSize: 16,
-    color: '#F18C8E',
+    color: '#333333',
   },
   postContent: {
     fontSize: 16,
-    marginBottom: 8,
+    color: '#666666',
+    marginBottom: 12,
   },
-  postLikes: {
-    fontSize: 14,
-    color: '#F18C8E',
+  postImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    marginBottom: 12,
+    borderRadius: 10,
+  },
+  commentsContainer: {
+    marginTop: 10,
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333333',
+  },
+  commentContainer: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  commentAuthor: {
+    fontWeight: 'bold',
+    marginRight: 4,
+    color: '#333333',
+  },
+  commentContent: {
+    flex: 1,
+    color: '#666666',
   },
   addButton: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: '#002D62',
+    bottom: 24,
+    right: 24,
+    backgroundColor: '#ff5a5f',
     borderRadius: 50,
-    width: 50,
-    height: 50,
+    width: 56,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1,
+    elevation: 8,
   },
   addButtonText: {
-    color: '#fff',
-    fontSize: 24,
+    color: '#ffffff',
+    fontSize: 32,
     fontWeight: 'bold',
   },
-
-  // modalContainer: {
-  //   flex: 1,
-  //   justifyContent: 'center',
-  //   alignItems: 'center',
-  //   backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  //   padding: 20,
-  // },
-  // modalTitle: {
-  //   fontSize: 24,
-  //   fontWeight: 'bold',
-  //   marginBottom: 16,
-  //   color: '#305F72',
-  // },
   modalInput: {
     height: 40,
-    width: '80%',
-    borderColor: 'gray',
+    width: '100%',
+    borderColor: '#cccccc',
     borderWidth: 1,
     marginBottom: 16,
-    paddingLeft: 10,
-    backgroundColor: '#fff',
+    paddingLeft: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     padding: 20,
+    borderRadius: 12,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    color: '#333333',
   },
   modalInputTitle: {
-    height: 40,
-    marginBottom: 16,
-    fontWeight: 'bold',
-    backgroundColor: '#f5e1e1',
-  },
-  modalInputContent: {
-    marginBottom: 16,
-    textAlignVertical: 'top',
-    backgroundColor: '#f5e1e1',
-  },
-  submitButton: {
+    fontSize: 18,
     marginBottom: 8,
-    backgroundColor: '#305F72',
+    color: '#333333',
   },
-  cancelButton: {
+  modalTextInput: {
     marginBottom: 16,
-    color: 'black',
+  },
+  modalButton: {
+    marginVertical: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    marginHorizontal: 20,
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  commentInput: {
+    flex: 1,
+    marginRight: 8,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+  },
+  commentSubmitButton: {
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  commentButton: {
+    marginTop: 8,
   },
 });
-
 export default Threads;

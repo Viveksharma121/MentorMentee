@@ -62,7 +62,6 @@
 //   return iconSource ? <Image source={iconSource} style={{ width: 24, height: 24, tintColor: color }} /> : null;
 // };
 
-
 //   return (
 //     <BottomNavigation
 //       navigationState={{ index, routes }}
@@ -76,23 +75,37 @@
 
 // export default BottomNavigationBar;
 
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import { useState } from 'react';
-import { Image, ImageStyle } from 'react-native';
+import {useEffect, useState} from 'react';
+import {ActivityIndicator, Image, ImageStyle} from 'react-native';
+import BuyItemsPage from '../Components/BuyItemsPage';
+import ChatGpt from '../Components/ChatGpt';
+import EditPost from '../Components/EditPost';
 import Login from '../Components/Login';
-import ProjectForm from '../Components/ProjectForm';
+import Notification from '../Components/Notification';
+import Profile from '../Components/Profile';
+import Rank from '../Components/Rank';
 import Register from '../Components/Register';
+import ResourceDetailScreen from '../Components/Resource/ResourceDetailScreen';
+import ResourceLibrary from '../Components/Resource/ResourceLibrary';
+import RoadmapComponent from '../Components/RoadMap';
+import SavedTweets from '../Components/SavedTweets';
+import ProjectForm from '../Components/Search/Searchpage';
+import Session from '../Components/Session';
+import SessionsDetail from '../Components/SessionDetail';
+import SessionsForm from '../Components/SessionsForm';
 import SkillsForm from '../Components/SkillsForm';
 import Threads from '../Components/Threads';
-import Profile from '../Components/Profile';
+import UserProfile from '../Components/UserProfile/UserProfile';
+import ChatPage from '../Components/chatApp/ChatPage';
+import HomePage from '../Components/chatApp/Homepage';
+import SearchPage from '../Components/chatApp/SearchPage';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const AuthNavigator = () => {
+const AppNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen
@@ -106,60 +119,288 @@ const AuthNavigator = () => {
         options={{headerShown: false}}
       />
       <Stack.Screen
-        name="AppAll"
-        component={AppNavigator}
-        options={{ headerShown: false }}
+        name="Main"
+        component={MainTabNavigator}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="RoadMap"
+        component={RoadmapComponent}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ResourceDetail"
+        component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SavedTweets"
+        component={SavedTweets}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatGpt"
+        component={ChatGpt}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPost}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Home"
+        component={HomePage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Searchh"
+        component={SearchPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatPage"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="BuyItemsPage"
+        component={BuyItemsPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SkillsForm"
+        component={SkillsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Rank"
+        component={Rank}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Session"
+        component={Session}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsForm"
+        component={SessionsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsDetail"
+        component={SessionsDetail}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
 };
 
-const AppNavigator = () => {
+const AppNavigator2 = () => {
+  return (
+    <Stack.Navigator initialRouteName="Main">
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Register"
+        component={Register}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Main"
+        component={MainTabNavigator}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="RoadMap"
+        component={RoadmapComponent}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ResourceDetail"
+        component={ResourceDetailScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SavedTweets"
+        component={SavedTweets}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatGpt"
+        component={ChatGpt}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="EditPost"
+        component={EditPost}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Home"
+        component={HomePage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Searchh"
+        component={SearchPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ChatPage"
+        component={ChatPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="BuyItemsPage"
+        component={BuyItemsPage}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Notification"
+        component={Notification}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SkillsForm"
+        component={SkillsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Rank"
+        component={Rank}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Session"
+        component={Session}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsForm"
+        component={SessionsForm}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="SessionsDetail"
+        component={SessionsDetail}
+        options={{headerShown: false}}
+      />
+    </Stack.Navigator>
+  );
+};
+
+const MainTabNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
-           let iconStyle: ImageStyle = { width: 24, height: 24 }
+          let iconStyle: ImageStyle = {width: 24, height: 24};
           if (route.name === 'Threads') {
             iconName = focused
               ? require('../assets/logo.png') // Image for active state
               : require('../assets/logo.png'); // Image for inactive state
+          } else if (route.name === 'Search') {
+            iconName = focused
+              ? require('../assets/search.jpeg') // Image for active state
+              : require('../assets/search.jpeg'); // Image for inactive state
+          } else if (route.name === 'ChatBot') {
+            iconName = focused
+              ? require('../assets/chatbot.png') // Image for active state
+              : require('../assets/chatbot.png'); // Image for inactive state
+          }  else if (route.name === 'Workshop') {
+            iconName = focused
+              ? require('../assets/workshop.png') // Image for active state
+              : require('../assets/workshop.png'); // Image for inactive state
           } else if (route.name === 'Profile') {
             iconName = focused
               ? require('../assets/profile.png') // Image for active state
               : require('../assets/profile.png'); // Image for inactive state
-          } else if (route.name === 'SkillsForm') {
+          } else if (route.name === 'Resource') {
             iconName = focused
-              ? require('../assets/skills.png') // Image for active state
-              : require('../assets/skills.png'); // Image for inactive state
-          } else if (route.name === 'ProjectForm') {
-            iconName = focused
-              ? require('../assets/profile.png') // Image for active state
-              : require('../assets/profile.png'); // Image for inactive state
-          }
+              ? require('../assets/book.jpg') // Image for active state
+              : require('../assets/book.jpg'); // Image for inactive state
+          } 
 
           // Add outline style if focused
           if (focused) {
-            iconStyle = { ...iconStyle, borderWidth: 2, borderColor: 'blue' };
+            iconStyle = {...iconStyle, borderWidth: 2, borderColor: 'blue'};
           }
           // You can return any component here
-          return <Image source={iconName} style={{ width: 24, height: 24 }} />;
+          return <Image source={iconName} style={{width: 24, height: 24}} />;
         },
-      })}
-    >
+      })}>
       <Tab.Screen name="Threads" component={Threads} />
+      <Tab.Screen name="Search" component={ProjectForm} />
+      <Tab.Screen name="ChatBot" component={ChatGpt} />
+      <Tab.Screen name="Workshop" component={Session} />
+      <Tab.Screen name="Resource" component={ResourceLibrary} />
       <Tab.Screen name="Profile" component={Profile} />
-      <Tab.Screen name="SkillsForm" component={SkillsForm} />
-      <Tab.Screen name="ProjectForm" component={ProjectForm} />
+
+      {/* <Tab.Screen name="ChatGpt" component={ChatGpt} /> */}
     </Tab.Navigator>
   );
 };
 
 const Navigator = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  return isLoggedIn ? <AppNavigator /> : <AuthNavigator />;
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        setIsLoggedIn(token !== null);
+      } catch (error) {
+        console.error('Error checking login status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}
+      />
+    );
+  }
+
+  return isLoggedIn ? <AppNavigator2 /> : <AppNavigator />;
 };
 
 export default Navigator;
